@@ -7,5 +7,5 @@
 ## 相关链接
 
 * [github.com](https://github.com/zhongl)
-* [speakerdeck.com](speakerdeck.com/zhongl)
-* [weibo.com](weibo.com/cafusic)
+* [speakerdeck.com](https://speakerdeck.com/zhongl)
+* [weibo.com](https://weibo.com/cafusic)
