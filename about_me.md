@@ -9,3 +9,5 @@
 * [github.com](https://github.com/zhongl)
 * [speakerdeck.com](https://speakerdeck.com/zhongl)
 * [weibo.com](https://weibo.com/cafusic)
+* [lofter.com](http://cafusic.lofter.com/)
+
