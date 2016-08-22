@@ -8,7 +8,7 @@ excerpt_separator: <!--more-->
 
 开源并不是多么牛逼事情，至少在我今天看来是这样的。
 
-为什么还值得拿出来一说，是因为大家都只看到 结果，而完全不了产生的过程。 这其中发生哪些有趣事情，又是怎样的机缘巧合，一切的细节是我认为能启发大家思考和成长的。
+为什么还值得拿出来一说，是因为没有参与其中的人都只看到了开源的结果，而完全不了解产生的过程。 这其中发生哪些有趣事情，又是怎样的机缘巧合，一切的细节是值得耐人寻味的。
 
 <!--more--> 
 
@@ -20,9 +20,11 @@ excerpt_separator: <!--more-->
 
 在随后非常短的时间里，这些人跃跃欲试于自己的工作环境中，并孵化出了不少衍生的开源项目。其中有一个就是 **hs4j** ，它提供了支持 **Java** 语言使用 **HandlerSocket** 的 **API** 。
 
-> **hs4j** 它是 **HandlerSocket for Java** 的缩写，是由前淘宝人花名伯岩独立研发的。 此人常用网名 *killme2008* ，国内著名论坛社区的活跃分子，其博客[庄周蝶梦](http://fnil.net/)人气极高。2012年他沉迷于 `Clojure` 无法自拔，并离开淘宝加入[LeanCloud](https://leancloud.cn/)至今。
+> **hs4j** 它是 **HandlerSocket for Java** 的缩写，作者是*[killme2008](http://fnil.net/)*。 
 
 当时， 我的主要工作是在为 **HDFS** 的 NameNode HA 的方案， 而 **hs4j** 恰好能为这个方案提供一种高可靠且高性能存储的可能。在使用的过程， 我发现 **hs4j** 提供的接口用起来就像 JDBC 的一样繁复啰嗦，由此萌发一个思路：**用类似 ORM 方式简化编码实现**。然后我就写了[**hs4j-kit**](https://github.com/zhongl/hs4j/tree/master/contributes/hs4j-kit)，并联系原作者表达了希望贡献给**hs4j**的意愿，他看过代码后非常乐意接收，只是提了一个小小的要求：**提供一份 README**。
+
+----
 
 # [iPage](https://github.com/zhongl/iPage)
 
@@ -30,7 +32,7 @@ excerpt_separator: <!--more-->
 
 
 > [**TimeTunnel2**](http://code.taobao.org/p/TimeTunnel/wiki/index/) 是我在数据平台开发的消息中间件的第二代，应用场景和[Kafka](http://kafka.apache.org)一样。可惜的是，在我完成上线的几个月后 [Kafka](http://kafka.apache.org) 开源啦，囧rz
-> 
+>
 > **Notify** 是2007年淘宝在调研了业界消息中间件发现没有合适之后，自研的一套系统，它是当时整个淘宝架构体系中最核心的中间件。 更多内容参见[中间件团队官方博客](http://jm.taobao.org/about/)。
 
 
@@ -80,7 +82,9 @@ excerpt_separator: <!--more-->
 - [开源协议声明](https://github.com/zhongl/iPage/blob/master/LICENSE.txt)
 
 最终**iPage**凭借突出的性能数据取代了 **store4j** ，但遗憾的是没能取代 **MySQL** 成为生产环境的存储实现。
- 
+
+----
+
 # [HouseMD](https://github.com/csug/housemd)
 
 **iPage**虽未能*善终*，但来自 **github** 上其他程序员的关注和鼓励，让我感受到了做开源的价值。也就是在这段时间，我进入自己开源的一个高产期，其中最值得来出来说的就是**HouseMD**了。
@@ -91,7 +95,7 @@ excerpt_separator: <!--more-->
 
 > 为了保证方便安装， 我与 [**jenv**](https://github.com/linux-china/jenv)作者一拍即合，将**HouseMD**纳入到**jenv**的工具库中。
 
-有时*好酒也怕巷子深* 啊，刚刚 POST 到 **github**上是无人问津的，但我自信这样工具能够也应该帮助更多的程序员。 随后我试着法子为**HouseMD**创造一些曝光机会，先是去[开源中国](http://www.oschina.net/p/housemd)发布项目，而后上 Weibo 求转发。
+有时*好酒也怕巷子深* 啊，刚刚 POST 到 **github**上是无人问津的，但我自信这样工具能够也应该帮助更多的程序员。 随后我试着法子为**HouseMD**创造一些曝光机会，先是去[开源中国](http://www.oschina.net/p/housemd)发布项目，而后上 Weibo 寻求转发。
 
 > [ Weibo 大 V 转发的效果是杠杠的](http://weibo.com/1650016175/ynQRvvZjY?from=page_1005051650016175_profile&wvr=6&mod=weibotime&type=comment)，5天之后 **github** 上项目的被 Star 的数量[超过100](http://weibo.com/1650016175/yoUOkA8rb?from=page_1005051650016175_profile&wvr=6&mod=weibotime&type=comment#_rnd1464840277949)， 成为 Scala 语言类项目 Top 1。
 >
@@ -116,8 +120,9 @@ excerpt_separator: <!--more-->
 >
 >那段时间，因为 Scala 我先后结识了 @陨石 和 @错刀， 一见如故之下， 我们厚颜无耻在 **Github** 上创建了 **CSUG** （China Scala User Group）这个组织， 为了不让主页空荡荡的， 于是乎 我和 @陨石相继把自己项目贡献到了**CSUG** 下。
 
+2014年的最后一天，我被领进了挖财在福地的办公区， 与刚刚开完会的 [李治国](http://weibo.com/mulolo) 寒暄了一句，就开始到工位上写代码了， 代码了， 码了...
 
-2014年的最后一天，我被 @洛世奇 领进了挖财在福地的办公区， 与刚刚开完会的 @海贝 寒暄了一句，就开始到工位上写代码了， 代码了， 码了...
+----
 
 # [config-annotation](https://github.com/wacai/config-annotation)
 
@@ -150,7 +155,5 @@ excerpt_separator: <!--more-->
 3. 我喜欢用 **Merge Request** 与同事协作开发，分享设计中心得，讨论 Bug 上的经验。
 
 言以至此，对于**开源**是什么，我由衷地希望看到这里的你能够与我感同身受，若是你也能实践**开源**，那么也就不枉我这一番良苦用心啦。
-
-
 
 The end.
