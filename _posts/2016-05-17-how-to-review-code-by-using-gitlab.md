@@ -2,6 +2,7 @@
 layout: post
 title: "如何用 Gitlab 做 Code Review"
 date: 2016-05-17 15:00:59 +0800
+categories: thinking
 excerpt_separator: <!--more-->
 ---
 

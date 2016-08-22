@@ -2,7 +2,7 @@
 layout: post
 title:  "我所经历的单元测试的三个境界"
 date:   2016-05-18 10:38:00 +0800
-categories: jekyll update
+categories: thinking
 excerpt_separator: <!--more-->
 ---
 

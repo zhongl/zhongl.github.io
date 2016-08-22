@@ -2,7 +2,7 @@
 layout: post
 title:  "使用 Scala Macro Annotation 实现配置项绑定（上）"
 date:   2015-01-17 20:38:00 +0800
-categories: jekyll update
+categories: scala
 excerpt_separator: <!--more-->
 ---
 
