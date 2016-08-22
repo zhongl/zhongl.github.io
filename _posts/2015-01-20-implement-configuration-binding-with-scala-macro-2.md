@@ -108,6 +108,6 @@ class KafkaConsumer {
 [0475d92c]:https://github.com/wacai/config-annotation/commit/0475d92c793b129c704c259cf1d509b025fca699
 [wbref]:http://www.weibo.com/1650016175/C0aW9dp3T?ref=atme&type=comment
 [404]:http://weibo.com/lianchengzju?from=profile&wvr=6
-[last]:http://segmentfault.com/blog/zhongl/1190000002493487
+[last]:{% post_url 2015-01-17-implement-configuration-binding-with-scala-macro-1 %}
 [reflect]:http://imranrashid.com/posts/scala-reflection/
 [readme]:https://github.com/wacai/config-annotation/tree/v0.2.0
