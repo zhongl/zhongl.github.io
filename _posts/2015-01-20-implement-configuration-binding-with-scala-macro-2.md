@@ -1,7 +1,7 @@
 ---
 layout: post
-title:  "使用 Scala Macro Annotation 实现配置项绑定（上）"
-date:   2015-01-17 20:38:00 +0800
+title:  "使用 Scala Macro Annotation 实现配置项绑定（中）"
+date:   2015-01-20 20:38:00 +0800
 categories: jekyll update
 excerpt_separator: <!--more-->
 ---
@@ -26,6 +26,8 @@ class Server {
 那 `= 0` 可以去掉吗? 
 
 答案是可以, 只是在被 [@连城404][404] 问到的时候我还没有想到办法.
+
+<!--more-->
 
 解决办法方法其实不难, 前提是要对 `Scala AST` 很熟悉. 
 
