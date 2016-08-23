@@ -2,7 +2,7 @@
 layout: post
 title: "一个简单易行的Gitlab项目分支管理办法"
 date: 2016-06-03 18:00:59 +0800
-categories: Thinking
+tags: gitlab, merge request, code review
 excerpt_separator: <!--more-->
 ---
 
@@ -11,7 +11,7 @@ excerpt_separator: <!--more-->
 master
    + -----> release/1.0                                     (1)
    |            + ------------> issue/1                     (2)
-   |            |                  | 
+   |            |                  |
    |            | <----- MR ------ +                        (3)
    |            |                                           (4)
    + <--- MR ---+                                           (5)
@@ -49,15 +49,11 @@ master
 
 ## 分支说明
 
-* **master** 
+* **master**
   * 最新的提交版本应该与线上版本保持一致
   * 必须是 **Protected**， 仅限项目 Owner 提交或合并
-* **release/{version}** 
+* **release/{version}**
   * 当前开发分支，`version`是版本号
   * 最新提交版本应该与测试环境保持一致
-* **issue/{id}** 
+* **issue/{id}**
   * 对应 issue 的开发分支
-
-## 相关文章
-
-[如何用 Gitlab 做 Code Review]({% post_url 2016-05-17-how-to-review-code-by-using-gitlab%})

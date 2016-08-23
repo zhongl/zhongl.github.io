@@ -2,11 +2,11 @@
 layout: post
 title: "如何用 Gitlab 做 Code Review"
 date: 2016-05-17 15:00:59 +0800
-categories: Thinking
+tags: gitlab, code review, branch, merge request
 excerpt_separator: <!--more-->
 ---
 
-## 基于分支的代码 Review 
+## 基于分支的代码 Review
 
 1. 新建 Issue (无论是 bug 还是 feature), 描述背景或问题,
 2. 本地创建分支 `issue/123` (`123`是 issue 的 ID), 围绕关联 issue 进行 `program -> commit -> push`,
@@ -23,7 +23,3 @@ excerpt_separator: <!--more-->
 ## Protect Branch
 
 为了避免意外的代码提交或合并， 项目 Owner 或 Master 可以在项目 `Settings -> Protected branches` 添加受保护的分支，进而引导代码提交是基于 Merge Request 的形式经过 review 之后才合并到目标分支上。
-
-## 相关文章
-
-[一个简单易行的Gitlab项目分支管理办法]({% post_url 2016-06-03-a-simple-strategy-of-branch-management %})

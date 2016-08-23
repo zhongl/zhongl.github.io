@@ -2,7 +2,7 @@
 layout: post
 title:  "使用 Scala Macro Annotation 实现配置项绑定（下）"
 date:   2015-01-23 21:30:00 +0800
-categories: Scala
+tags: scala
 excerpt_separator: <!--more-->
 ---
 
@@ -19,7 +19,7 @@ excerpt_separator: <!--more-->
 
 [中篇][2] 的最后, 我留下了一个 `sbt-plugin` 任务待完成,.
 
-在细想过后, 发现基于上个版本的实现, 还有不少细节上的难点. 
+在细想过后, 发现基于上个版本的实现, 还有不少细节上的难点.
 
 这迫使我从 **生成配置文件** 的角度出发, 重新设计声明配置的代码风格.
 
@@ -27,7 +27,7 @@ excerpt_separator: <!--more-->
 
 也正是因此催生了这近乎完美的[第三个版本][3].
 
-## Config-style 
+## Config-style
 
 拜 `scala` 灵活语法特性所赐, 代码可以写非常接近最后的配置, 我把这种这写法命名为 `config-style` :
 
@@ -83,7 +83,7 @@ kafka {
 
 默认情况下, 会在 `src/main/resources` 目录里产生一个与 `trait` 同名的 `.conf` 文件.
 
-为什么不直接写入 `application.conf` ? 
+为什么不直接写入 `application.conf` ?
 
 理由很简单, 当有多个 `config-style` 的声明时, 最后合并更新 `application.conf` 的过程会比较烧脑.
 

@@ -2,7 +2,7 @@
 layout: post
 title:  "我所经历的单元测试的三个境界"
 date:   2016-05-18 10:38:00 +0800
-categories: Thinking
+tags: unit test
 excerpt_separator: <!--more-->
 ---
 
@@ -12,7 +12,7 @@ excerpt_separator: <!--more-->
 ```java
 public class Killer {
   public void doAwsomeThings() { ... }
-  
+
   public static void main(String[] args) throws Exception {
     System.out.println("Start...");
     new Killer().doAwsomeThings();
@@ -33,7 +33,7 @@ public class Killer {
 
 ```java
 public class XxxHelper {
-  public String magic(String s) {...} 
+  public String magic(String s) {...}
 }
 
 
@@ -54,7 +54,7 @@ public class XxxHelperTest {
 > 通过它，我可以清楚的了解到测试用例是否足够， 有没有覆盖到我**最关心**，**最担心**的那部分逻辑。与此同时，我对代码质量的信心也来源于此。
 >
 
-![cobertura-report](https://www.playframework.com/documentation/1.0.1/images/cobertura1) 
+![cobertura-report](https://www.playframework.com/documentation/1.0.1/images/cobertura1)
 
 
 > **测试覆盖率要达到多少才算好呢？**
@@ -94,7 +94,7 @@ public class XxxHelperTest {
 
 ### 为文档而测试
 
-平庸的程序员至少有两件事情最不情愿做： 
+平庸的程序员至少有两件事情最不情愿做：
 
 * 如果说写**测试**算一个的话，那么
 * 写**文档**必须是另一个
@@ -106,25 +106,25 @@ public class XxxHelperTest {
 **试想一下，要是测试代码就是文档的话，不是一举两得的好事吗？**
 
 ```java
-public class TraderSteps { 
-  
+public class TraderSteps {
+
     private Stock stock;
- 
+
     @Given("a stock of symbol $symbol and a threshold of $threshold")
     public void aStock(String symbol, double threshold) {
         stock = new Stock(symbol, threshold);
     }
- 
+
     @When("the stock is traded at $price")
     public void theStockIsTradedAt(double price) {
         stock.tradeAt(price);
     }
- 
+
     @Then("the alert status should be $status")
     public void theAlertStatusShouldBe(String status) {
         ensureThat(stock.getStatus().name(), equalTo(status));
     }
- 
+
 }
 ```
 
@@ -198,4 +198,3 @@ public class MultipleDataSourcesTest {
 1. 有了这样的测试代码，你再也不用把时间浪费在 QQ 的沟通上；
 2. 有了这样的测试代码，Code Review 对你来说都是件轻松愉快的事情；
 3. 有了这样的测试代码，你是不是都有了提 Merge Request 的冲动呢？
-

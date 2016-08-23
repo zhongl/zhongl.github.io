@@ -2,7 +2,7 @@
 layout: post
 title:  "我的开源经历"
 date:   2016-06-02 14:10:00 +0800
-categories: Thinking
+tags: open source, github, hs4j, housemd, iPage, config-annotation
 excerpt_separator: <!--more-->
 ---
 
@@ -10,7 +10,7 @@ excerpt_separator: <!--more-->
 
 为什么还值得拿出来一说，是因为没有参与其中的人都只看到了开源的结果，而完全不了解产生的过程。 这其中发生哪些有趣事情，又是怎样的机缘巧合，一切的细节是值得耐人寻味的。
 
-<!--more--> 
+<!--more-->
 
 # [HS4J](https://github.com/zhongl/hs4j)
 
@@ -20,7 +20,7 @@ excerpt_separator: <!--more-->
 
 在随后非常短的时间里，这些人跃跃欲试于自己的工作环境中，并孵化出了不少衍生的开源项目。其中有一个就是 **hs4j** ，它提供了支持 **Java** 语言使用 **HandlerSocket** 的 **API** 。
 
-> **hs4j** 它是 **HandlerSocket for Java** 的缩写，作者是*[killme2008](http://fnil.net/)*。 
+> **hs4j** 它是 **HandlerSocket for Java** 的缩写，作者是*[killme2008](http://fnil.net/)*。
 
 当时， 我的主要工作是在为 **HDFS** 的 NameNode HA 的方案， 而 **hs4j** 恰好能为这个方案提供一种高可靠且高性能存储的可能。在使用的过程， 我发现 **hs4j** 提供的接口用起来就像 JDBC 的一样繁复啰嗦，由此萌发一个思路：**用类似 ORM 方式简化编码实现**。然后我就写了[**hs4j-kit**](https://github.com/zhongl/hs4j/tree/master/contributes/hs4j-kit)，并联系原作者表达了希望贡献给**hs4j**的意愿，他看过代码后非常乐意接收，只是提了一个小小的要求：**提供一份 README**。
 

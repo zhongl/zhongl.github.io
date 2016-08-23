@@ -2,7 +2,7 @@
 layout: post
 title:  "使用 Scala Macro Annotation 实现配置项绑定（上）"
 date:   2015-01-17 20:38:00 +0800
-categories: Scala
+tags: scala
 excerpt_separator: <!--more-->
 ---
 
@@ -29,7 +29,7 @@ class KafkaConsumer extends Actor {
   val settings = Settings(context.system)  
   val brokerHost = settings.BrokerHost
   val brokerPort = settings.BrokerPort
-  
+
   def receive = ???
 }
 ```

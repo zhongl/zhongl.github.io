@@ -1,27 +1,29 @@
-# Welcome to Jekyll!
+# Permalinks
 #
-# This config file is meant for settings that affect your whole blog, values
-# which you are expected to set up once and rarely need to edit after that.
-# For technical reasons, this file is *NOT* reloaded automatically when you use
-# 'jekyll serve'. If you change this file, please restart the server process.
+# Use of `relative_permalinks` ensures post links from the index work properly.
+permalink:           pretty
 
-# Site settings
-title: 放着, 我来
-description: ""
-baseurl: ""
-url: "http://zhongl.github.io"
+# Setup
+title:               '放着，我来'
+tagline:             'by zhongl'
+description:         '理想和情怀是有代价的, 但好在它不是自由的枷锁, 而应该是真正的自由本身. by <a href="https://github.com/dcaoyuan" target="_blank">@dcaoyuan</a>'
+url:                 https://zhongl.github.io
+baseurl:             ''
+paginate:            5
 
-# Build settings
-markdown: kramdown
+exclude:
+   - README.md
+   - LICENSE.md
+
+# About/contact
+author:
+  name:              Zhongl
+  url:               https://github.com/zhongl
+  email:             zhong.lunfu@gmail.com
+
+# Custom vars
+version:             1.0.0
 
 gems:
-   - jekyll-archives
-   - jekyll-sitemap
-   - jekyll-mentions
-   - jemoji
-   - jekyll-redirect-from
-   - jekyll-feed
-
-jekyll-archives:
-  enabled:
-     - categories
+   - jekyll-paginate
+   - jekyll-gist
