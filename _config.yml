@@ -11,8 +11,18 @@ email: zhong.lunfu@gmail.com
 description: ""
 baseurl: ""
 url: "http://zhongl.github.io"
-twitter_username: zhongl
-github_username:  zhongl
 
 # Build settings
 markdown: kramdown
+
+gems:
+   - jekyll-archives
+#   - jekyll-mentions
+#   - jemoji
+#   - jekyll-redirect-from
+#   - jekyll-sitemap
+#   - jekyll-feed
+
+jekyll-archives:
+  enabled:
+     - categories
