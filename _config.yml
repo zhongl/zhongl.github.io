@@ -7,7 +7,6 @@
 
 # Site settings
 title: 放着, 我来
-email: zhong.lunfu@gmail.com
 description: ""
 baseurl: ""
 url: "http://zhongl.github.io"
@@ -17,11 +16,11 @@ markdown: kramdown
 
 gems:
    - jekyll-archives
-#   - jekyll-mentions
-#   - jemoji
-#   - jekyll-redirect-from
-#   - jekyll-sitemap
-#   - jekyll-feed
+   - jekyll-sitemap
+   - jekyll-mentions
+   - jemoji
+   - jekyll-redirect-from
+   - jekyll-feed
 
 jekyll-archives:
   enabled:
