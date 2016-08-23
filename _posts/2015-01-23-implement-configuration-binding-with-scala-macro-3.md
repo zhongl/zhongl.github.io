@@ -2,7 +2,7 @@
 layout: post
 title:  "使用 Scala Macro Annotation 实现配置项绑定（下）"
 date:   2015-01-23 21:30:00 +0800
-tags: scala
+tags: scala, macro, annotation, configuration
 excerpt_separator: <!--more-->
 ---
 
@@ -99,7 +99,7 @@ kafka {
 
 终. (碎觉)
 
-[example]:https://github.com/wacai/config-annotation-example
-[3]:https://github.com/wacai/config-annotation
+[example]: https://github.com/wacai/config-annotation-example
+[3]: https://github.com/wacai/config-annotation
 [2]:{% post_url 2015-01-20-implement-configuration-binding-with-scala-macro-2 %}
 [1]:{% post_url 2015-01-17-implement-configuration-binding-with-scala-macro-1 %}
