@@ -3,7 +3,7 @@ layout: post
 Date: 2016-04-05 12:00:00 +0800
 title: '微信开发平台本地调式方法'
 tags: wechat, proxy, ssh, netcat, openapi
-excerpt-separator: <!--more--> 
+excerpt_separator: <!--more--> 
 ---
 
 ```
@@ -13,11 +13,11 @@ excerpt-separator: <!--more-->
  +--------------------+         +------------+        +-----------+
 ```
 
-<!--more--> 
+<!--more-->
 
 ### 传统方式
 
-`ML`上开发代码，打包部署到 `AE` 上运行，然后与 `WOS` 联调。 
+`ML`上开发代码，打包部署到 `AE` 上运行，然后与 `WOS` 联调。
 
 #### 问题
 
