@@ -12,9 +12,27 @@ baseurl:             ''
 paginate:            5
 paginate_path:       'p/:num'
 
+markdown: kramdown
+highlighter: rouge
+excerpt_separator: "<!--more-->"
+incremental: false
+
+kramdown:
+  input: GFM
+  hard_wrap: false
+  auto_ids: true
+  footnote_nr: 1
+  entity_output: as_char
+  toc_levels: 1..6
+  smart_quotes: lsquo,rsquo,ldquo,rdquo
+  enable_coderay: false
+
 exclude:
    - README.md
    - LICENSE.md
+   - Gemfile
+   - Gemfile.lock
+   - .gitignore
 
 gems:
    - jekyll-paginate
@@ -23,8 +41,11 @@ gems:
    - jekyll-sitemap
    - jekyll-seo-tag
    - jekyll-feed
-   - jekyll-archives
 
 jekyll-archives:
   enabled:
-     - tags   
+    - tags
+  layouts:
+    tag: archive
+  permalinks:
+    tag: '/tags/:name/'
