@@ -3,7 +3,7 @@ layout: post
 date:  2010-04-05 14:50:00 +0800
 title: '基于AOP的日志调试'
 tags: java, log4j, aop, guice
-excerpt-separator: <!--more--> 
+excerpt_separator: <!--more--> 
 ---
 
 # 断点 vs 日志
@@ -11,16 +11,16 @@ excerpt-separator: <!--more-->
 断点是我们日常开发最为常见和高效的调试手段, 相比较输入日志它给予更多的状态信息和灵活的观察角度, 但断点调试是有前提和局限的：
 
 * 需要一个界面友好, 功能强大的IDE,
-* 比较适合于在单机的开发环境中进行. 
+* 比较适合于在单机的开发环境中进行.
 
 企业应用开发中, 我们常常会遇到无法断点调试的窘境, 例如:
 
 * 这个异常仅在生产环境出现, 开发环境里无法重现;
 * 存在外部系统依赖, 开发环境无法模拟等.
 
-这迫使我们不得不回到**日志调试**的老路子上来. 
+这迫使我们不得不回到**日志调试**的老路子上来.
 
-<!--more--> 
+<!--more-->
 
 # Print vs Logging
 
@@ -34,7 +34,7 @@ System.out.println("debug infomation");
 
 # 为什么要基于AOP
 
-Log4j挺好用的, 只是与`System.out.print`一样, 在代码中随处可见, 但却没有业务价值. 
+Log4j挺好用的, 只是与`System.out.print`一样, 在代码中随处可见, 但却没有业务价值.
 
 更令人头痛的是, 并非每次我们都有足够的经验告诉自己应该在哪里添加这些语句, 以致于调试中不断的因为调正它们的在代码中的位置, 而反复编译 - 打包 - 发布系统. 这种体力活, 太......
 
@@ -43,7 +43,7 @@ Log4j挺好用的, 只是与`System.out.print`一样, 在代码中随处可见, 
 * 将Logging剥离于业务之外, 让代码更易于维护,
 * 无需重新编译,甚至能够运行时, 可调整输出日志的位置.
 
-[AOP][aop]完全可以帮助我们做到上述两点. 
+[AOP][aop]完全可以帮助我们做到上述两点.
 
 这完全不是什么新鲜观点, 这在任何介绍[AOP][aop]文章中, 都会提到Logging是其最典型的应用场景.
 
@@ -99,7 +99,7 @@ public class LoggingModule extends AbstractModule {
   	bindInterceptor(Matchers.any(), Matchers.any(), new LoggingInterceptor());  
   }    
 }  
-  
+
 public class Main {  
   public static void main(String[] args) {  
   	Injector injector = Guice.createInjector(new BusinessModule(), new LoggingModule());  
@@ -121,12 +121,12 @@ bindInterceptor(Matchers.any(), Matchers.any(), new LoggingInterceptor());
 ```java
 public class MethodRegexMatcher extends AbstractMatcher<Method> {  
   final Pattern pattern = Pattern.compile(System.getProperty("logging.method.regex", "*"));  
-  
+
   @Override  
   public boolean matches(Method method) {  
     return pattern.matcher(method.getName()).matches();  
   }  
-  
+
 }  
 ```
 
@@ -138,13 +138,13 @@ public class MethodRegexMatcher extends AbstractMatcher<Method> {
 
 ```java
 public class LoggingInterceptor implements MethodInterceptor {  
-  
+
   private String regex = "*";  
-  
+
   public void setMethodRegex(String regex){  
     this.regex = regex;  
   }  
-  
+
   @Override  
   public Object invoke(MethodInvocation invocation) throws Throwable {  
     String methodName = invocation.getMethod().getName();  
@@ -164,13 +164,13 @@ public class LoggingInterceptor implements MethodInterceptor {
 }  
 ```
 
-而后可借助JMX动态调整regex的值, 来实现运行时的配置. 
+而后可借助JMX动态调整regex的值, 来实现运行时的配置.
 
 小结
 
 本文仅以[Guice][g]为例讨论如何改进我们日常开发中调试的问题, 其实这在Spring应用也同样能够实现的, 甚至其它应用[AOP][aop]的场景都是可行的.
 
-拓展开来, 不仅是Logging, 说不定验证(测试)也是可行的呢! 
+拓展开来, 不仅是Logging, 说不定验证(测试)也是可行的呢!
 
 > 思想有多远, 我们就能走多远!
 

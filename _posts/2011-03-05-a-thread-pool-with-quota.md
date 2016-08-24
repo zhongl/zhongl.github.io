@@ -3,7 +3,7 @@ layout: post
 date:  2011-03-05 11:26:00 +0800
 title: '支持配额的共享线程池'
 tags: java, thread, concurrency
-excerpt-separator: <!--more-->
+excerpt_separator: <!--more-->
 ---
 
 受 [@放翁_文初](http://weibo.com/fangweng) 的 [逻辑划分线程池](http://www.blogjava.net/cenwenchu/archive/2011/03/01/345387.html) 一文的启发, 用了几个小时动手实现了一个简陋支持配额的共享线程池. 基本思路与放翁相同, 区别在于引入了两种线程分配策略:

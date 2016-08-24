@@ -3,7 +3,7 @@ layout: post
 Date: 2015-01-30 12:00:00 +0800
 title: '使用 mitmproxy 代理 JAVA 应用 HTTPS 请求'
 tags: java, https, proxy
-excerpt-separator: <!--more--> 
+excerpt_separator: <!--more-->
 ---
 
 ## 背景问题
@@ -14,9 +14,10 @@ excerpt-separator: <!--more-->
 
 > Server access Error: sun.security.validator.ValidatorException: PKIX path building failed: sun.security.provider.certpath.SunCertPathBuilderException: unable to find valid certification path to requested ...
 
-<!--more--> 
+<!--more-->
 
 ### 环境
+
 ```
 Mac OSX 10.10.2
 java version "1.7.0_55"
@@ -38,7 +39,7 @@ sudo keytool -importcert -alias mitmproxy  \
 > password 默认是 changeit
 
 
-### 查明 keystore 路径 
+### 查明 keystore 路径
 
 ```
 scala -e 'import java.net._; new URL("https://www.wacai.com").openConnection.asInstanceOf[HttpURLConnection].disconnect' -Djavax.net.debug=SSL | grep "trustStore is"

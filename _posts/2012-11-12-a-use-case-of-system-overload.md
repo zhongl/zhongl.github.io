@@ -3,7 +3,7 @@ layout: post
 date: 2012-11-12 16:00:00 +0800
 title: '一个系统过载的案例及其解决办法'
 tags: system, recovery
-excerpt-separator: <!--more-->
+excerpt_separator: <!--more-->
 ---
 
 系统出现过载现象(或问题)的原因和场景有很多, 这里并不试图归纳总结; 而是如题, 就一个特定的案例, 分享一些过载保护的实践办法.

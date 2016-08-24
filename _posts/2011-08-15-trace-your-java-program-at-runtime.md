@@ -3,16 +3,18 @@ layout: post
 date:  2011-08-15 14:50:00 +0800
 title: '动态实时跟踪你的java程序'
 tags: java, btrace, aop, aspectj, cglib
-excerpt-separator: <!--more--> 
+excerpt_separator: <!--more-->
 ---
 
-之前有写 [基于AOP的日志调试]({% post_url 2010-04-05-debug-by-aop %}) 讨论一种跟踪Java程序的方法, 但不是很完美.后来发现了 [Btrace](https://github.com/btraceio/btrace) , 由于它借助动态字节码注入技术 , 实现优雅且功能强大. 
+之前有写 [基于AOP的日志调试]({% post_url 2010-04-05-debug-by-aop %}) 讨论一种跟踪Java程序的方法, 但不是很完美.后来发现了 [Btrace][b] , 由于它借助动态字节码注入技术 , 实现优雅且功能强大.
 
-只不过, 用起来总是磕磕绊绊的, 时常为了跟踪某个问题, 却花了大把的时间调试Btrace的脚本. 为此, 我尝试将几种跟踪模式固化成脚本模板, 待用的时候去调整一下正则表达式之类的. 
+只不过, 用起来总是磕磕绊绊的, 时常为了跟踪某个问题, 却花了大把的时间调试 [Btrace][b] 的脚本. 为此, 我尝试将几种跟踪模式固化成脚本模板, 待用的时候去调整一下正则表达式之类的.
 
-跟踪过程往往是假设与验证的螺旋迭代过程, 反复的用BTrace跟踪目标进程, 总有那么几次莫名其妙的不可用, 最后不得不重启目标进程. 若真是线上不能停的服务, 我想这种方式还是不靠谱啊.
+跟踪过程往往是假设与验证的螺旋迭代过程, 反复的用 [BTrace][b] 跟踪目标进程, 总有那么几次莫名其妙的不可用, 最后不得不重启目标进程. 若真是线上不能停的服务, 我想这种方式还是不靠谱啊.
 
 为此, 据决定自己的搞个用起来简单, 又能良好支持反复跟踪而不用重启目标进程的工具.
+
+<!--more-->
 
 # AOP
 
@@ -102,7 +104,7 @@ before(): say() { ... }
 after() : say() { ... }
 ```
 
-AspectJ 实现切面的时机有两种: 
+AspectJ 实现切面的时机有两种:
 
 * 静态编译
 * 类加载期编织(load-time weaving)
@@ -131,7 +133,7 @@ Person p = e.create();
 
 ## 字节码操纵
 
-上面四种方法各有适用的场景, 但唯独对运行着的Java进程进行动态的跟踪支持不了, 当然也许是我了解的不够深入, 若有基于上述方案的办法还请不吝赐教. 
+上面四种方法各有适用的场景, 但唯独对运行着的Java进程进行动态的跟踪支持不了, 当然也许是我了解的不够深入, 若有基于上述方案的办法还请不吝赐教.
 
 还是回到Btrace[^5]的思路上来, 在理解了它借助 `java.lang.instrument` 进行字节码注入的实现原理[^6]后, 实现动态变化跟踪方式或目标应该没有问题.
 
@@ -153,7 +155,7 @@ Person p = e.create();
       methodName = name;
       this.className = className;
     }
-    
+
     @Override
     public void visitMaxs(int maxStack, int maxLocals) {
       mark(end);
@@ -167,7 +169,7 @@ Person p = e.create();
       visitInsn(ATHROW);
       super.visitMaxs(maxStack, maxLocals);
     }
-    
+
     @Override
     protected void onMethodEnter() {
       push(className);
@@ -178,7 +180,7 @@ Person p = e.create();
       invokeStatic(Probe.TYPE, Probe.ENTRY);
       mark(start);
     }
-    
+
     @Override
     protected void onMethodExit(int opcode) {
       if (opcode == ATHROW) return; // do nothing, @see visitMax
@@ -189,7 +191,7 @@ Person p = e.create();
       loadThis();
       invokeStatic(Probe.TYPE, Probe.EXIT);
     }
-    
+
     private void prepareResultBy(int opcode) {
       if (opcode == RETURN) { // void
         push((Type) null);
@@ -204,7 +206,7 @@ Person p = e.create();
         box(Type.getReturnType(methodDesc));
       }
     }
-    
+
     private final String className;
     private final String methodName;
     private final Label start;
@@ -229,6 +231,8 @@ Person p = e.create();
 * [来自rednaxelafx的JVM分享](http://www.slideshare.net/cafusic/jvm20101228)
 * [BCEL](http://commons.apache.org/bcel/manual.html)
 
+
+[b]: https://github.com/btraceio/btrace
 [^1]: http://jiprof.sourceforge.net/
 [^2]: http://download.oracle.com/javase/6/docs/api/java/lang/reflect/Proxy.html
 [^3]: http://www.eclipse.org/aspectj/
@@ -237,4 +241,3 @@ Person p = e.create();
 [^6]: http://kenwublog.com/btrace-theory-analysis
 [^7]: http://www.ibm.com/developerworks/cn/java/j-jip/index.html?ca=drs
 [^8]: http://download.forge.objectweb.org/asm/asm-guide.pdf
-

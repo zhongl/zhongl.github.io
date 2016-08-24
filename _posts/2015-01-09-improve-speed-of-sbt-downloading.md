@@ -3,7 +3,7 @@ layout: post
 date: 2015-01-09 12:00:00 +0800
 title: '加速 SBT 下载依赖库的速度'
 tags: sbt, scala, proxy
-excerpt-separator: <!--more-->
+excerpt_separator: <!--more-->
 ---
 
 根据 [SBT][sbt] 的官网文档中 [Proxy Repositories][proxy_repos] 部分的描述, 可以通过改变 `repositories` 的 `url` 列表来优化.
