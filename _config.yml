@@ -10,6 +10,7 @@ description:         '理想和情怀是有代价的, 但好在它不是自由�
 url:                 https://zhongl.github.io
 baseurl:             ''
 paginate:            5
+paginate_path:       'p/:num'
 
 exclude:
    - README.md
