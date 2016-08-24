@@ -1,14 +1,14 @@
 ---
 layout: post
-Date: 2015-01-09 12:00:00 +0800
+date: 2015-01-09 12:00:00 +0800
 title: '加速 SBT 下载依赖库的速度'
 tags: sbt, scala, proxy
-excerpt-separator: <!--more--> 
+excerpt-separator: <!--more-->
 ---
 
 根据 [SBT][sbt] 的官网文档中 [Proxy Repositories][proxy_repos] 部分的描述, 可以通过改变 `repositories` 的 `url` 列表来优化.
 
-<!--more--> 
+<!--more-->
 
 ### 配置国内代理库
 
@@ -17,10 +17,10 @@ excerpt-separator: <!--more-->
 ```
 [repositories]
   local
-  oschina:http://maven.oschina.net/content/groups/public/ 
+  oschina:http://maven.oschina.net/content/groups/public/
 ```
 
-> 若你知道其他更快的镜像库, 同上配置. 
+> 若你知道其他更快的镜像库, 同上配置.
 > 一般互联网企业部署了供内部使用的镜像库(如 nexus ), 也可以配置于此.
 
 ### 兼容 `Ivy` 路径布局
@@ -30,15 +30,15 @@ excerpt-separator: <!--more-->
 ```
 [repositories]
   local
-  oschina:http://maven.oschina.net/content/groups/public/ 
-  oschina-ivy:http://maven.oschina.net/content/groups/public/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext] 
+  oschina:http://maven.oschina.net/content/groups/public/
+  oschina-ivy:http://maven.oschina.net/content/groups/public/, [organization]/[module]/(scala_[scalaVersion]/)(sbt_[sbtVersion]/)[revision]/[type]s/[artifact](-[classifier]).[ext]
 ```
 
 ###  精简 `url` 列表
 
 远程仓库越多越全, 可以基本避免下载不到的问题. 但是, 也可能让下载的时间更长, 让你不愿在等待而放弃下载.
 
-因为, 下载过程中 [SBT][sbt] 会串行的 "询问" 列表中所有的远程仓库, 无论是否找得到. 
+因为, 下载过程中 [SBT][sbt] 会串行的 "询问" 列表中所有的远程仓库, 无论是否找得到.
 
 当依赖树越大, 整个下载的过程就更漫长. 若再遇到响应慢的仓库, 情况恶化的令人发指.
 

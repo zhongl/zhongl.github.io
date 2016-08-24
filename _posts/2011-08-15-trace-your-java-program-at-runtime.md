@@ -1,6 +1,6 @@
 ---
 layout: post
-Date:  2011-08-15 14:50：00 +0800
+date:  2011-08-15 14:50:00 +0800
 title: '动态实时跟踪你的java程序'
 tags: java, btrace, aop, aspectj, cglib
 excerpt-separator: <!--more--> 
