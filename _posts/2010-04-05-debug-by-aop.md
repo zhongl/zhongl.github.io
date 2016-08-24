@@ -2,8 +2,8 @@
 layout: post
 date:  2010-04-05 14:50:00 +0800
 title: '基于AOP的日志调试'
-tags: java, log4j, aop, guice
-excerpt_separator: <!--more--> 
+excerpt_separator: <!--more-->
+tags: [java, log4j, aop, guice]
 ---
 
 # 断点 vs 日志

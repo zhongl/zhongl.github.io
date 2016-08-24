@@ -2,8 +2,8 @@
 layout: post
 title: '复用命令行的小技巧'
 date: 2015-02-06 12:00:00 +0800
-tags: shell, bash, sed, awk, function
-excerpt_separator: <!--more--> 
+tags: [shell, bash, sed, awk, function]
+excerpt_separator: <!--more-->
 ---
 
 重复执行同一个命令行不在此文讨论(需要讨论吗?).

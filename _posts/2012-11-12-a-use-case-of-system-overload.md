@@ -2,7 +2,7 @@
 layout: post
 date: 2012-11-12 16:00:00 +0800
 title: '一个系统过载的案例及其解决办法'
-tags: system, recovery
+tags: [system, recovery]
 excerpt_separator: <!--more-->
 ---
 

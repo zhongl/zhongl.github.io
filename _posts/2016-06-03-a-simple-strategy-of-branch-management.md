@@ -2,7 +2,7 @@
 layout: post
 title: "一个简单易行的Gitlab项目分支管理办法"
 date: 2016-06-03 18:00:59 +0800
-tags: gitlab, merge request, code review
+tags: [gitlab, merge request, code review]
 excerpt_separator: <!--more-->
 ---
 

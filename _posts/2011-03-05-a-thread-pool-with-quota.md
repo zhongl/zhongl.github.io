@@ -2,7 +2,7 @@
 layout: post
 date:  2011-03-05 11:26:00 +0800
 title: '支持配额的共享线程池'
-tags: java, thread, concurrency
+tags: [java, thread, concurrency]
 excerpt_separator: <!--more-->
 ---
 

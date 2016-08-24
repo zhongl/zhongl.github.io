@@ -2,7 +2,7 @@
 layout: post
 title:  "我的开源经历"
 date:   2016-06-02 14:10:00 +0800
-tags: open source, github, hs4j, housemd, iPage, config-annotation
+tags: [open source, github, hs4j, housemd, iPage, config-annotation]
 excerpt_separator: <!--more-->
 ---
 

@@ -2,7 +2,7 @@
 layout: post
 date: 2015-01-09 12:00:00 +0800
 title: '加速 SBT 下载依赖库的速度'
-tags: sbt, scala, proxy
+tags: [sbt, scala, proxy]
 excerpt_separator: <!--more-->
 ---
 
