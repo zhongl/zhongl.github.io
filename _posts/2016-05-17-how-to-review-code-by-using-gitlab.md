@@ -3,7 +3,7 @@ layout: post
 title: "如何用 Gitlab 做 Code Review"
 date: 2016-05-17 15:00:59 +0800
 tags: [gitlab, code review, branch, merge request]
-excerpt_separator: <!--more-->
+last_modified_at: 2016-08-25 15:20:00 +0800
 ---
 
 ## 基于分支的代码 Review

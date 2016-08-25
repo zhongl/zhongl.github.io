@@ -3,7 +3,7 @@ layout: post
 title:  "使用 Scala Macro Annotation 实现配置项绑定（中）"
 date:   2015-01-20 20:38:00 +0800
 tags: [scala, macro, annotation, configuration]
-excerpt_separator: <!--more-->
+last_modified_at: 2016-08-25 15:20:00 +0800
 ---
 
 

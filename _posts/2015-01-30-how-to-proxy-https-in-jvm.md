@@ -3,7 +3,7 @@ layout: post
 Date: 2015-01-30 12:00:00 +0800
 title: '使用 mitmproxy 代理 JAVA 应用 HTTPS 请求'
 tags: [java, https, proxy]
-excerpt_separator: <!--more-->
+last_modified_at: 2016-08-25 15:20:00 +0800
 ---
 
 ## 背景问题

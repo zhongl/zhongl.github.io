@@ -3,7 +3,7 @@ layout: post
 date:  2011-08-15 14:50:00 +0800
 title: '动态实时跟踪你的java程序'
 tags: [java, btrace, aop, aspectj, cglib]
-excerpt_separator: <!--more-->
+last_modified_at: 2016-08-25 15:20:00 +0800
 ---
 
 之前有写 [基于AOP的日志调试]({% post_url 2010-04-05-debug-by-aop %}) 讨论一种跟踪Java程序的方法, 但不是很完美.后来发现了 [Btrace][b] , 由于它借助动态字节码注入技术 , 实现优雅且功能强大.

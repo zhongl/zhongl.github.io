@@ -2,8 +2,8 @@
 layout: post
 title:  "我的开源经历"
 date:   2016-06-02 14:10:00 +0800
+last_modified_at: 2016-08-25 15:20:00 +0800
 tags: [open source, github, hs4j, housemd, iPage, config-annotation]
-excerpt_separator: <!--more-->
 ---
 
 开源并不是多么牛逼事情，至少在我今天看来是这样的。
