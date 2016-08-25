@@ -28,3 +28,12 @@ ul.tx3-tag-cloud li a:hover
     -ms-transition: color 250ms linear;
     transition: color 250ms linear;
 }
+
+ul.posts-unselected {
+	display: none;
+}
+
+ul.posts.tag {
+	padding-top: 50px;
+	padding-left: 30px;
+}
