@@ -18,6 +18,8 @@ spring-boot 官方文档就 properties 文件装载有如下说明[^1]:
 >
 > The list is ordered by precedence (properties defined in locations higher in the list **override** those defined in lower locations).
 
+<!--more-->
+
 简言之，properties 文件有四处装载位置，如果多处都存在`application.properties`， 且 property  有重复，则前者会**覆盖**后者。
 
 > 我写了个项目 [zhongl/spring-boot-config-trap](https://github.com/zhongl/spring-boot-config-trap) 可以演示这一特性：
