@@ -1,9 +1,9 @@
-```
+---
 layout:	post
 date:	2016-08-26 14:52:50 +0800
 title:	'spring-boot 配置陷阱'
 tags:	[spring-boot, configuration]
-```
+---
 
 spring-boot 官方文档就 properties 文件装载有如下说明[^1]:
 
