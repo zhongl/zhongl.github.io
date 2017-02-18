@@ -87,7 +87,7 @@ public class WebPlugin extends StagemonitorPlugin
 
 1. 这是一个针对 Tomcat 应用场景的特定方案，并不适用于所有的 JVM 应用，这在 [stagemonitor][sm] 的 [wiki](https://github.com/stagemonitor/stagemonitor/wiki/Step-1%3A-In-Browser-Widget#embedded-servlet-containers) 中也有体现； 
 2. **Attach API** 并非由标准库提供，这意味着没有安装 JDK （仅有 JRE）的环境是不支持的，这点在 stagemonitor 的 wiki 中也有[声明](https://github.com/stagemonitor/stagemonitor/wiki/Installation)；
-3. **Attach API** 启动 Javaagent （回调 `agentmain`）的时机是在 `main` 方法开始之后的，这意味着在启动之前已经完成装载字节码，哪怕是属于修改范畴，在启动后的修改逻辑中也不会生效，除非特别指定要 `Instrumentation.retransformClasses(Class<?>... classes)`。
+3. **Attach API** 启动 Javaagent （回调 `agentmain`）的时机是在 `main` 方法开始之后的，这意味着在启动之前已经完成装载的字节码，哪怕是属于修改范畴，在 Javaagent 启动后的进行修改也是不会生效，除非特别指定要 `Instrumentation.retransformClasses(Class<?>... classes)`。
 
 零侵入带来的友好体验，相对于通过修改 **命令行参数** 而言并不见得有很大的优势。 同样是 Tomcat 的场景， 实现 **命令行参数** 的[方式][ta]:
 
