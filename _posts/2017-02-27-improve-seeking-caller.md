@@ -9,6 +9,8 @@ tags:	[javaagent, apm]
 
 相信你已经想到了！通过`Thread.currentThread().getStackTrace()`就可以拿到当前方法的调用栈`StackTraceElement[]`，遍历它便可确定调用执行 SQL 的方法究竟有哪些。具体我们看看 [Stagemonitor][sm] 的[实现代码][cu]吧:
 
+<!--more-->
+
 ```java
 private static String getCallerSignatureGetStackTrace() {
   String executedBy = null;
