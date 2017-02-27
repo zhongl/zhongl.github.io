@@ -26,7 +26,7 @@ private static String getCallerSignatureGetStackTrace() {
 
 调用栈方法那么多，怎么找到我们关心的那个调用方法呢？如上，[Stagemonitor][sm]通过配置以便让`StagemonitorClassNameMatcher.isIncluded()`可以对类名进行过滤， 找到第一个满足条件的就是我们关心的方法啦。举个例子，通常执行 SQL 的调用方法都存在 DAO 类中， 而这类类名的命名都有一定的特征， 比如叫`XxxDAO`。 然后，便可以利用这个特征来匹配类名啦。
 
-## 注意，不要忽视性能问题！
+## 注意，不要忽视观察者效应！
 
 尤其对于[Stagemonitor][sm]来说， 作为一个观测工具，应该[尽可能减少对被观测对象的影响](https://zh.wikipedia.org/wiki/%E8%A7%82%E6%B5%8B%E8%80%85%E6%95%88%E5%BA%94)。 `Thread.currentThread().getStackTrace()`是一个相对耗时的调用，且随着调用栈的深度增加，而调用耗时更多。具体到执行SQL的场景， 一个典型的 Spring + MyBatis 的 Web 应用， 它的调用栈就有可能好几十层。
 
