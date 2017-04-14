@@ -13,6 +13,8 @@ Java 应用开发时常会有一个 **隐隐作痛** 的问题， 就是部署�
 
 作为一个有轻度强迫症的程序员， 我在近期试图应对这个问题的时候， 花了不少时间踩坑， 觉得有必要记录一下。
 
+<!--more-->
+
 # 当 maven-shade-plugin 遭遇 log4j2
 
 我在自己的开发项目中使用 [maven-shade-plugin][sd] ，一方面实现最终只用交付一个 jar 以提升部署效率；另一方面则是使用它的一个容易被忽略的功能，[**类级别的无用代码裁剪**](https://maven.apache.org/components/plugins/maven-shade-plugin/shade-mojo.html#minimizeJar)， 来为最终的 jar 进行瘦身。
