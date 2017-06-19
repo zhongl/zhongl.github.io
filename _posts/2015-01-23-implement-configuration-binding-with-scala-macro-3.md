@@ -100,6 +100,8 @@ kafka {
 终. (碎觉)
 
 [example]: https://github.com/wacai/config-annotation-example
-[3]: https://github.com/wacai/config-annotation
+[3]: https://github.com/zhongl/config-annotation
 [2]:{% post_url 2015-01-20-implement-configuration-binding-with-scala-macro-2 %}
 [1]:{% post_url 2015-01-17-implement-configuration-binding-with-scala-macro-1 %}
+
+

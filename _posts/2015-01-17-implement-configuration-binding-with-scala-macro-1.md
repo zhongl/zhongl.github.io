@@ -167,4 +167,6 @@ annottees.map(_.tree).toList match {
 [akka]: http://akka.io
 [ts]: http://typesafe.com
 [conf]: https://github.com/typesafehub/config
-[conf-anno]: https://github.com/wacai/config-annotation/tree/v0.1.1
+[conf-anno]: https://github.com/zhongl/config-annotation/tree/v0.1.1
+
+
