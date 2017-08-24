@@ -1,7 +1,7 @@
 ---
 layout:	post
-date:	2017-08-23 19:30:00 +0800
-title:'回顾我的微服务之旅'
+date: 	2017-08-23 19:30:00 +0800
+title: '回顾我的微服务之旅'
 tags:	[microservice, springboot, dropwizard]
 ---
 
