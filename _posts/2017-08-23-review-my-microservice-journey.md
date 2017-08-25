@@ -31,7 +31,7 @@ tags:	[microservice, springboot, dropwizard]
 
 随即，我面向团队以及全公司分享推广 Dropwizard， 也率先在信贷业务线的非核心系统上作试点。
 
-![image about dropwizard](public/media/15035744851157.jpg)
+![image about dropwizard]({{ site.url }}/public/media/15035744851157.jpg)
 （图片源自[spring-boot 在统一架构体系中的价值](https://speakerdeck.com/zhongl/spring-boot-zai-tong-jia-gou-ti-xi-zhong-de-jie-zhi)）
 
 正在公司推行实施服务化的王福强（[扶墙老师](https://afoo.me/)）受此举启发，也为日后选用 [SpringBoot](http://projects.spring.io/spring-boot/) 构建微服务体系打响了第一枪。
