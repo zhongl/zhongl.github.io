@@ -119,7 +119,7 @@ class UnitGenSpec extends FlatSpec with Matchers {
 1. 所需评审的代码变更都必须以 [Pull Request](https://help.github.com/articles/about-pull-requests/) 方式提交， 提交后[travis-ci](https://docs.travis-ci.com/)会自动帮你对变更的代码版本运行测试用例，是否通过的结果会显示在 Pull Requst 中；
 ![image pull request]({{ site.url }}/public/media/15119503358517.jpg)
 
-    > Pull Request 就是一个特殊的 Issue， 需要说明变更的意图，且自动包含了变更的所有 `commits` 以及 方便的文件 diff 视图， 这里提供一个真实的 Pull Request 供参考 https://github.com/zhongl/config-annotation/pull/6 
+    > Pull Request 就是一个特殊的 Issue， 需要说明变更的意图，且自动包含了变更的所有 `commits` 以及 方便的文件 diff 视图， 这里提供一个真实的 Pull Request 供参考 <https://github.com/zhongl/config-annotation/pull/6>
 
 1. 余下的操作细节，还请自行参考 [Pull Request 文档](https://help.github.com/articles/about-pull-requests/) 。
 
