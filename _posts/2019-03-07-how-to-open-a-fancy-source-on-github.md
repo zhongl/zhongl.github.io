@@ -9,7 +9,7 @@ tags:	[github, open source]
 
 门槛虽然降低了, 只可惜大多数程序猿并没有足够(Hua)严(Xin)肃(Si)对待, 使得开源的项目就好像只是公开的学习笔记, 无人问津, 完全丧失应有的意义.
 
-本文稍许入门的聊聊, 如何让你的项目严(Bi)肃(Ge)起来, 搞不好有人回来 **Star**, **Fork**, 甚至 **Pull Request** 呢!
+本文稍许入门的聊聊, 如何让你的项目严(Bi)肃(Ge)起来, 搞不好有人会来 **Star**, **Fork**, 甚至 **Pull Request** 呢!
 <!--more-->
 
 ## Description
