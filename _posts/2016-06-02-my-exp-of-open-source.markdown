@@ -136,7 +136,7 @@ tags: [open source, github, hs4j, housemd, iPage, config-annotation]
 
 这里我做了几件事：
 
-1. 向**typesafe**社区提交了 [Pull Request](**https**://github.com/typesafehub/config/pull/242)，并得到接纳；
+1. 向**typesafe**社区提交了 [Pull Request](https://github.com/typesafehub/config/pull/242)，并得到接纳；
 2. 将**jar**持续的发布到 [Maven Central Repo](http://search.maven.org/#artifactdetails%7Ccom.wacai%7Cconfig-annotation_2.11%7C0.3.4%7Cjar);
 3. 将**Release note** 发布到[ notes.implicit.ly](http://notes.implicit.ly/post/131209824519/config-annotation-034);
 4. 借助 [travis-ci.org](https://travis-ci.org/wacai/config-annotation) 实现持续集成；
