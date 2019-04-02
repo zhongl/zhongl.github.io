@@ -1,14 +1,5 @@
-My blog.
+# Generate
 
-## Initialization
-
-```
-sudo gem install bundle -n /usr/local/bin
-bundle install --path /usr/local/bundle
-```
-
-## Preview
-
-```
-JEKYLL_GITHUB_TOKEN=***** bundle exec jekyll serve
+```sh
+amm -p predef.sc build.sc generate zhongl zhongl.github.com https://zhongl.github.io/ 
 ```
