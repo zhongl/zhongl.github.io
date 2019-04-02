@@ -48,7 +48,7 @@ body {
 }
 
 html {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Noto Sans SC", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 16px;
   line-height: 1.5;
 }
@@ -259,8 +259,8 @@ tbody tr:nth-child(odd) th {
  */
 
 .lead {
-  font-size: 1.25rem;
-  font-weight: 300;
+  font-size: 1rem;
+  font-weight: 400;
 }
 
 
@@ -286,40 +286,12 @@ tbody tr:nth-child(odd) th {
  */
 
 .container {
-  max-width: 38rem;
+  /* max-width: 38rem; */
   padding-left:  1rem;
   padding-right: 1rem;
   margin-left:  auto;
   margin-right: auto;
 }
-
-
-/*
- * Masthead
- *
- * Super small header above the content for site name and short description.
- */
-
-.masthead {
-  padding-top:    1rem;
-  padding-bottom: 1rem;
-  margin-bottom: 3rem;
-}
-.masthead-title {
-  margin-top: 0;
-  margin-bottom: 0;
-  color: #505050;
-}
-.masthead-title a {
-  color: #505050;
-}
-.masthead-title small {
-  font-size: 75%;
-  font-weight: 400;
-  color: #c0c0c0;
-  letter-spacing: 0;
-}
-
 
 /*
  * Posts and pages
@@ -345,11 +317,30 @@ tbody tr:nth-child(odd) th {
 }
 
 /* Meta data line below post title */
-.post-date {
-  display: block;
+.post-meta,
+.post-meta a {
   margin-top: -.5rem;
   margin-bottom: 1rem;
   color: #9a9a9a;
+}
+
+.post-comment {
+  color: #9a9a9a;
+  float: right;
+}
+
+.post-badge {
+  display: inline-block;
+  background-color: #268bd2;
+  color: #ffffff;
+  border-radius: 2px;
+  box-shadow: inset 0 -1px 0 rgba(27,31,35,.12);
+  font-size: 14px;
+  font-weight: 400;
+  height: 30px;
+  line-height: 25px;
+  padding: .15em 4px;
+  margin-right: .25em;
 }
 
 /* Related posts */
@@ -377,6 +368,9 @@ tbody tr:nth-child(odd) th {
   color: inherit;
 }
 
+.label h1 {
+  border-bottom: 1px solid #eee;
+}
 
 /*
  * Pagination
@@ -389,7 +383,7 @@ tbody tr:nth-child(odd) th {
   overflow: hidden; /* clearfix */
   margin-left: -1rem;
   margin-right: -1rem;
-  font-family: "PT Sans", Helvetica, Arial, sans-serif;
+  font-family: "Noto Sans SC", Helvetica, Arial, sans-serif;
   color: #ccc;
   text-align: center;
 }
