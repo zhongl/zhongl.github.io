@@ -13,4 +13,4 @@ after_success:
   - git config user.email $USER_EMAIL
   - git add .
   - git commit -m 'Generate site.'
-  - git push -f "https://${GITHUB_TOKEN}@github.com/$USER_NAME/$REPO" master:master
+  - git push -f "https://${GITHUB_TOKEN}@github.com/$(dirname $TRAVIS_REPO_SLUG)/$(basename $TRAVIS_REPO_SLUG)" master:master
