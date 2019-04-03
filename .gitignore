@@ -1,16 +1,6 @@
 # Ignore docs files
-_gh_pages
 _site
-.ruby-version
 
 # OS or Editor folders
 .DS_Store
 ._*
-Thumbs.db
-.idea
-
-.editorconfig
-
-.bundle
-
-*.lock

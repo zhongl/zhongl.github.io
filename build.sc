@@ -97,6 +97,7 @@ def generate(
   implicit val dateFrag: java.util.Date => Frag = d => stringFrag(d | "dd MMM yyyy")
 
   @inline def post(i: Issue): (RelPath, Frag) = {
+    println(s"generate post: ${i.path}")
     i.path -> div(cls:="post")(
       h1(cls:="post-title")(i.title),
       p(cls:="post-meta")(i.created, RawFrag(" @"), a(href:=i.user.html_url)(i.user.login)),
@@ -122,6 +123,7 @@ def generate(
       }
     }
     for ((l, pis) <- group.toList) yield {
+      println(s"generate label: ${l.path}")
       l.path -> div(cls:="label")(h1(l.name), list(pis))
     }
   }
@@ -131,12 +133,13 @@ def generate(
     .internal("Home", RelPath.rel, is => div(list(is)))
     .posts { is => labels(is) ++ is.map(post) }
   
-  val response = requests.get(s"https://api.github.com/repos/$owner/$repo/issues")
+  val response = requests.get(s"https://api.github.com/repos/$owner/$repo/issues", params = Map("state" -> "closed"))
   val issues = upickle.default.read[List[Issue]](response.text)
 
   rm! pwd / to
   generate(issues)
   cp.over(pwd / "template" / "public", pwd / to / "public")
+  write(pwd / to / "README.md", "**This is generated static blog by Github issues, more information please see [branch iblog](https://github.com/zhongl/zhongl.github.com/tree/iblog)**.")
 }
 
 object markdown {

@@ -1,9 +1,18 @@
-deploy:
-  provider: pages
-  skip_cleanup: true
-  github_token: $GITHUB_TOKEN  # Set in the settings page of your repository, as a secure variable
-  keep_history: false
-  verbose: true
-  target_branch: master
-  on:
-    branch: iblog
+env:
+  - USER_NAME=zhongl
+  - USER_EMAIL=zhong.lunfu@gmail.com
+  - SITE=https://zhongl.github.io/
+  - REPO=zhongl.github.com
+
+install:
+  - sudo sh -c '(echo "#!/usr/bin/env sh" && curl -L https://github.com/lihaoyi/Ammonite/releases/download/1.6.5/2.12-1.6.5) > /usr/local/bin/amm && chmod +x /usr/local/bin/amm' && amm
+
+script:
+  - amm -p predef.sc build.sc generate $USER_NAME $REPO $SITE
+  - cd _site
+  - git init
+  - git config user.name $USER_NAME
+  - git config user.email $USER_EMAIL
+  - git add .
+  - git commit -m 'Generate site.'
+  - git push -f "https://${GITHUB_TOKEN}@github.com/$USER_NAME/$REPO" master:master
