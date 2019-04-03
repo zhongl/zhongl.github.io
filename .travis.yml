@@ -4,7 +4,7 @@ install:
   - sudo sh -c '(echo "#!/usr/bin/env sh" && curl -L https://github.com/lihaoyi/Ammonite/releases/download/1.6.5/2.12-1.6.5) > /usr/local/bin/amm && chmod +x /usr/local/bin/amm'
 
 script:
-  - amm -p predef.sc build.sc generate $(dirname $TRAVIS_REPO_SLUG) $(basename $$TRAVIS_REPO_SLUG) $GITHUB_TOKEN $SITE
+  - amm -p predef.sc build.sc generate $(dirname $TRAVIS_REPO_SLUG) $(basename $TRAVIS_REPO_SLUG) $GITHUB_TOKEN $SITE
 
 after_success:  
   - cd _site
