@@ -1,14 +1,12 @@
-env:
-  - USER_NAME=zhongl
-  - USER_EMAIL=zhong.lunfu@gmail.com
-  - SITE=https://zhongl.github.io/
-  - REPO=zhongl.github.com
+language: java
 
 install:
-  - sudo sh -c '(echo "#!/usr/bin/env sh" && curl -L https://github.com/lihaoyi/Ammonite/releases/download/1.6.5/2.12-1.6.5) > /usr/local/bin/amm && chmod +x /usr/local/bin/amm' && amm
+  - sudo sh -c '(echo "#!/usr/bin/env sh" && curl -L https://github.com/lihaoyi/Ammonite/releases/download/1.6.5/2.12-1.6.5) > /usr/local/bin/amm && chmod +x /usr/local/bin/amm'
 
 script:
   - amm -p predef.sc build.sc generate $USER_NAME $REPO $SITE
+
+after_success:  
   - cd _site
   - git init
   - git config user.name $USER_NAME
