@@ -1,5 +1,3 @@
-# Generate
+# A blog generate by Ammonite and Github Issues
 
-```sh
-amm -p predef.sc build.sc generate zhongl zhongl.github.com https://zhongl.github.io/ 
-```
+Please read [.travis.yml](./.travis.yml).
