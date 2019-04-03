@@ -39,6 +39,7 @@ object api {
         .set(Parser.EXTENSIONS, Seq(
           TablesExtension.create(),
           SimTocExtension.create(),
+          TocExtension.create(),
           FootnoteExtension.create()
         ).asJava)
 
