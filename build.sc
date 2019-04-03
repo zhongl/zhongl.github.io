@@ -152,6 +152,8 @@ def generate(
   }
 
   val generate = Blog[List[Issue], Frag]()
+    .external("Lofter", s"http://cafusic.lofter.com/")
+    .external("Speaker", s"https://speakerdeck.com/zhongl/")
     .external("Github", s"https://github.com/$owner")
     .internal("Home", RelPath.rel, is => div(list(is)))
     .posts { is => labels(is) ++ is.map(post) }
