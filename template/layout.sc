@@ -69,13 +69,17 @@ class Hyde private (
   )
 
   protected def sidebar(navigators: List[Navigator]): Modifier = {    
+    @inline def prefix(url: String): String = {
+      if (url.startsWith("http")) url else s"$baseUri/$url"
+    }
+
     div(cls:="sidebar")(
       div(cls:=s"container ${if (stickySidebar) "sidebar-sticky" else ""}")(
         div(cls:="sidebar-about")(
           h1(slogon),
           about
         ),
-        tags2.nav(cls:="sidebar-nav")(navigators.map(n => a(cls:="sidebar-nav-item", href:=s"${baseUri}/${n.url}")(n.label))),
+        tags2.nav(cls:="sidebar-nav")(navigators.map(n => a(cls:="sidebar-nav-item", href:=prefix(n.url))(n.label))),
         copyRight
       )
     )
