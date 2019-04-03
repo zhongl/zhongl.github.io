@@ -76,8 +76,10 @@ object api {
 def generate(
   owner: String @doc("github account"),
   repo: String @doc("github repository"),
+  token: String @doc("personal access token of github"),
   site: String @doc("base uri or directory of site") = (pwd / "_site").toString, 
-  to: String @doc("directory to generate") = "_site" 
+  to: String @doc("directory to generate") = "_site",
+  per_page: Int @doc("issues per page to fetch") = 5 
 ) = {
   import api._
 
@@ -128,16 +130,34 @@ def generate(
     }
   }
 
+  @inline def fetch[A](url: String, page: Int = 1)(implicit r: upickle.default.Reader[List[A]]): List[A] = {
+
+    @scala.annotation.tailrec def rec(page: Int, acc: List[A]): List[A] = {
+      val response = requests.get(url, params = Map(
+        "state" -> "closed", 
+        "access_token" -> token,
+        "per_page" -> s"$per_page", 
+        "page" -> s"$page"
+      ))
+      println(s"got ${response.url}")
+      if (response.statusCode >= 400) println(response)
+      val list = upickle.default.read[List[A]](response.text)
+      response.headers.get("link") match {
+        case Some(v) if v.head.contains("rel=\"next\"") => rec(page + 1, acc ++ list)
+        case _                                          => acc ++ list        
+      }
+    }
+
+    rec(page, Nil)
+  }
+
   val generate = Blog[List[Issue], Frag]()
     .external("Github", s"https://github.com/$owner")
     .internal("Home", RelPath.rel, is => div(list(is)))
     .posts { is => labels(is) ++ is.map(post) }
   
-  val response = requests.get(s"https://api.github.com/repos/$owner/$repo/issues", params = Map("state" -> "closed"))
-  val issues = upickle.default.read[List[Issue]](response.text)
-
   rm! pwd / to
-  generate(issues)
+  generate(fetch[Issue](s"https://api.github.com/repos/$owner/$repo/issues"))
   cp.over(pwd / "template" / "public", pwd / to / "public")
   write(pwd / to / "README.md", "**This is generated static blog by Github issues, more information please see [branch iblog](https://github.com/zhongl/zhongl.github.com/tree/iblog)**.")
 }
