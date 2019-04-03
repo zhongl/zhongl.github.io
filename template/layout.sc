@@ -75,7 +75,7 @@ class Hyde private (
           h1(slogon),
           about
         ),
-        tags2.nav(cls:="sidebar-nav")(navigators.map(n => a(cls:="sidebar-nav-item", href:=n.url)(n.label))),
+        tags2.nav(cls:="sidebar-nav")(navigators.map(n => a(cls:="sidebar-nav-item", href:=s"${baseUri}/${n.url}")(n.label))),
         copyRight
       )
     )
