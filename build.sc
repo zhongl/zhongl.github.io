@@ -115,7 +115,7 @@ def generate(
 
   @inline def list(is: List[Issue]): Frag = {
     ul(cls:="related-posts")(is.map { i =>
-      li(h2(a(href:=i.path.toString)(i.title, " ", small(i.created))))
+      li(h2(a(href:=s"/${i.path}")(i.title, " ", small(i.created))))
     })
   }
 
