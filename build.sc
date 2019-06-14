@@ -15,7 +15,7 @@ import upickle.default.{ReadWriter => RW, macroRW}
 object api {
 
   // https://developer.github.com/v3/issues/#response-1
-  final case class Issue(id: Int, title: String, created_at: String, user: User, html_url: String, labels: List[Label], comments: Int, body: String) {
+  final case class Issue(id: Int, title: String, closed_at: String, user: User, html_url: String, labels: List[Label], comments: Int, body: String) {
     private lazy val meta: Map[String, String] = {
       import org.jsoup._
 
@@ -53,7 +53,7 @@ object api {
 
     def created: java.util.Date = {
       // For legacy post specified real created date
-      meta.get("created").map(_ | "yyyy-MM-dd").getOrElse(created_at | "yyyy-MM-dd'T'HH:mm:ss'Z'")    
+      meta.get("created").map(_ | "yyyy-MM-dd").getOrElse(closed_at | "yyyy-MM-dd'T'HH:mm:ss'Z'")    
     }
   }
   object Issue {
