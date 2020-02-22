@@ -134,12 +134,15 @@ def generate(
   @inline def fetch[A](url: String, page: Int = 1)(implicit r: upickle.default.Reader[List[A]]): List[A] = {
 
     @scala.annotation.tailrec def rec(page: Int, acc: List[A]): List[A] = {
-      val response = requests.get(url, params = Map(
-        "state" -> "closed", 
-        "access_token" -> token,
-        "per_page" -> s"$per_page", 
-        "page" -> s"$page"
-      ))
+      val response = requests.get(
+        url, 
+        headers = Map("Authorization" -> s"token $token"),
+        params = Map(
+          "state" -> "closed", 
+          "per_page" -> s"$per_page", 
+          "page" -> s"$page"
+        )
+      )
       println(s"got ${response.url}")
       if (response.statusCode >= 400) println(response)
       val list = upickle.default.read[List[A]](response.text)
