@@ -86,7 +86,7 @@ def generate(
 
   implicit val l = layout.Hyde(
     baseUri = site,
-    slogon = "放着, 我来",
+    slogon = "我写的代码没人看",
     about = blockquote("理想和情怀是有代价的, 但好在它不是自由的枷锁, 而应该是真正的自由本身. ", a(href:="https://weibo.com/1875401263/DDSIEbOJy")("by @dcaoyuan")),
     copyRight = p(RawFrag(s"&copy; ${now | "yyyy"}. All rights reserved"))
   )
