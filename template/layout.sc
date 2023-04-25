@@ -66,11 +66,12 @@ class Hyde private (
     // Icons
     link(rel:="apple-touch-icon-precomposed", attr("sizes"):="144x144", href:=s"$baseUri/public/apple-touch-icon-144-precomposed.png"),
     link(rel:="shortcut icon", href:=s"$baseUri/public/favicon.ico"),
-    script(src:="https://www.googletagmanager.com/gtag/js?id=UA-6664231-5"),
+    script(src:="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"),
     script(""" window.dataLayer = window.dataLayer || [];
-            function gtag(){dataLayer.push(arguments);}
-            gtag('js', new Date());
-            gtag('config', 'UA-6664231-5');
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-REFRQT9XHR');
     """)
   )
 
