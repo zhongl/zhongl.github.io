@@ -1,0 +1,15 @@
+<ul class="px-0 sm:flex text-md list-none">
+    @:for(laika.metadata.keywords)
+    <li class="sm:ml-2 first:ml-0 my-2">
+        <a class="
+            before:content-['#_'] 
+            bg-gray-300 
+            p-1 
+            rounded-lg 
+            outline
+            outline-transparent
+            hover:outline-gray-500
+            " href="#">${_}</a>
+    </li>
+    @:@
+</ul>

@@ -1,0 +1,41 @@
+<html class="scroll-smooth">
+
+<head>
+    <title>${cursor.currentDocument.title}</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <link rel="stylesheet" type="text/css" href="../css/output.css">
+</head>
+
+<body>
+    <main class="antialiased">
+
+        <nav>
+            @:include(/header.template.html)
+        </nav>
+
+        <article class="font-mono">
+            <header>
+                <time datetime="${laika.metadata.published}">
+                    @:date(laika.metadata.published, "MMM dd, yyy")
+                </time>
+                <h1>${cursor.currentDocument.title}</h1>
+            </header>
+
+            ${cursor.currentDocument.content}
+
+            <nav class="not-prose font-sans">
+                @:include(/keywords.template.html)
+            </nav>
+        </article>
+
+        <footer>
+            <div class="sm:flex justify-between text-sm text-slate-400">
+                @:include(/footer.template.html)
+            </div>
+        </footer>
+    </main>
+
+</body>
+
+</html>

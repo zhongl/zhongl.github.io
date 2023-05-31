@@ -1,0 +1,10 @@
+<figure id="${_.id}" class="overflow-auto pb-8 relative">
+    @:if(_.hasCaption)
+    <figcaption class="text-center absolute bottom-0 inset-x-0">${_.caption}</figcaption>
+    @:@
+</figure>
+<script type="module" async>
+    import '/js/p5.mjs';
+    import s from '${_.sketch}';
+    new p5(s, "${_.id}");
+</script>

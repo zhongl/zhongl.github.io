@@ -1,0 +1,15 @@
+# Ignore docs files
+_site
+*.scala
+.scala*
+
+# OS or Editor folders
+.DS_Store
+._*
+.metals/
+.scala-build/
+.bsp/
+.vscode/
+target/
+node_modules/
+debug/

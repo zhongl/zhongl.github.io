@@ -1,0 +1,90 @@
+@tailwind base;
+
+article > p > img {
+  @apply p-2 border;
+}
+
+@tailwind components;
+
+code .identifier {
+  color: var(--syntax-base4);
+}
+code .tag-punctuation {
+  color: var(--syntax-base3);
+}
+code .comment, code .xml-cdata, code .markup-quote {
+  color: var(--syntax-base2);
+}
+
+code .substitution, code .xml-processing-instruction, code .markup-emphasized, code .annotation {
+  color: var(--syntax-wheel1);
+}
+code .keyword, code .escape-sequence, code .markup-headline {
+  color: var(--syntax-wheel2);
+}
+code .attribute-name, .markup-link-target, code .declaration-name {
+  color: var(--syntax-wheel3);
+}
+code .number-literal, .string-literal, .literal-value, .boolean-literal, .char-literal, .symbol-literal, .regex-literal, .markup-link-text {
+  color: var(--syntax-wheel4);
+}
+code .type-name, code .tag-name, code .xml-dtd-tag-name, code .markup-fence {
+  color: var(--syntax-wheel5);
+}
+
+
+@tailwind utilities;
+
+@layer base {
+
+  cite {
+    @apply before:content-['——_'] text-right block;
+  }
+
+  a[target="_blank"] {
+    @apply after:content-['↗'];
+  }
+
+  main > * {
+    @apply px-4 w-full;
+  }
+
+  main > nav {
+    @apply border-b py-2;
+  }
+
+  main > article {
+    @apply prose mx-auto py-4;
+  }
+
+  main > article > h1 {
+    @apply hidden;
+  }
+  
+  main > article > p > img {
+    @apply p-2 border;
+  }  
+
+  main > footer {
+    @apply mt-12 pt-2 pb-8 border-t;
+  }
+
+  *[id] {
+    @apply scroll-mt-12;
+  }
+
+  :root {
+    --syntax-base1: #2a3236;
+    --syntax-base2: #8c878e;
+    --syntax-base3: #b2adb4;
+    --syntax-base4: #bddcee;
+    --syntax-base5: #e8e8e8;
+    --syntax-wheel1: #e28e93;
+    --syntax-wheel2: #ef9725;
+    --syntax-wheel3: #ffc66d;
+    --syntax-wheel4: #7fb971;
+    --syntax-wheel5: #4dbed4;
+  }
+
+}
+
