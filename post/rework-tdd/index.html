@@ -1,0 +1,218 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>重来TDD</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="编译器可能是最容易被遗忘的测试利器。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/">𝚲</a></div></menu><article><header><time datetime="2024-10-22">Oct 22, 2024</time><h1>重来TDD</h1></header><div class="lead">
+<p>编译器可能是最容易被遗忘的测试利器。</p>
+</div>
+<figure>
+<img src="3b0f78589d8c5c84e92aca7766a17192328da2de.png"
+alt="图片来自网络" />
+<figcaption aria-hidden="true">图片来自网络<a href="#fn1"
+class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></figcaption>
+</figure>
+<p>原本计划着写一个话题叫，“最近我怎么不写测试用例啦”？没成想，这坑一挖，把自己陷进去了。再不停一停的话，怕是我要爬不出来了。</p>
+<p>虽不敢说自己是 TDD（Test-Driven Development）<a href="#fn2"
+class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a>
+的狂热信徒，但至少我是一直在用编程测试用例来为开发的代码保驾护航的。与我共事过的朋友应该都还记得，我犯测试覆盖强迫症时的样子。</p>
+<p>今天，我要来聊另一个名气没那么大的 TDD（Type-Driven
+Development）。诶，别急着走，如果你是对高质量代码感兴趣的话，这个 TDD
+是不会让你失望的，相信我。</p>
+<p>从业早年，听坊间传闻，“某语言只要编译通过了，就没有BUG”。很长时间里，我不得甚解，但大受震撼。直到最近，我有了一点小小的收获，遂拿个小例子与大家众乐一番。</p>
+<p>这个例子源自「Type-Driven Development with Idris」一书<a href="#fn3"
+class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>，只不过我是从 Scala 的视角来解读 <a
+href="#fn4" class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a>，接下来言归正传。</p>
+<h2 id="printf">Printf</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">printf</span><span class="op">(</span><span class="st">&quot;age: %d&quot;</span><span class="op">,</span> <span class="dv">23</span><span class="op">)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>age<span class="op">:</span> <span class="dv">23</span></span></code></pre></div>
+<p>这是一个再常见不过的打印输出函数了，给定一个字符串模版
+<code>age %d</code>，后面的参数 <code>23</code> 会替换掉模版中的占位符
+<code>%d</code>，从而显示出来。</p>
+<p>不同的占位符对其参数的类型是其实是有预期的 <a href="#fn5"
+class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a>。遗憾的是，这无法体现在函数的类型声明上。</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="op">:</span><span class="kw">type</span> <span class="fu">printf</span><span class="op">(</span><span class="st">&quot;age: %d&quot;</span><span class="op">,</span> _<span class="op">)</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="bu">Seq</span><span class="op">[</span><span class="ex">Any</span><span class="op">]</span> <span class="op">=&gt;</span> <span class="bu">Unit</span></span></code></pre></div>
+<p>即，第二参数类型是任意值的序列。也就意味着，编译器对这种类型的错配，无能为力。</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">printf</span><span class="op">(</span><span class="st">&quot;age: %d&quot;</span><span class="op">,</span> <span class="st">&quot;john&quot;</span><span class="op">)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>java<span class="op">.</span>util<span class="op">.</span><span class="ex">IllegalFormatConversionException</span><span class="op">:</span> </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  d <span class="op">!=</span> java<span class="op">.</span>lang<span class="op">.</span><span class="ex">String</span></span></code></pre></div>
+<p>编译器真的无能为力吗？我尝试实现一个类型安全的
+<code>Printf</code>，看看效果先。</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="op">:</span><span class="kw">type</span> <span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;age: %d&quot;</span><span class="op">)(</span>_<span class="op">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="bu">Int</span> <span class="op">=&gt;</span> <span class="bu">Unit</span></span></code></pre></div>
+<p>试着犯如上的错误，</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;age: %d&quot;</span><span class="op">)(</span><span class="st">&quot;john&quot;</span><span class="op">)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> <span class="op">[</span>E007<span class="op">]</span> <span class="ex">Type</span> Mismatch <span class="ex">Error</span><span class="op">:</span> <span class="op">--</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">|</span><span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;age: %d&quot;</span><span class="op">)(</span><span class="st">&quot;john&quot;</span><span class="op">)</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>                  <span class="op">^^^^^^</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> Found<span class="op">:</span>    <span class="op">(</span><span class="st">&quot;john&quot;</span> <span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span> Required<span class="op">:</span> <span class="bu">Int</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> error found</span></code></pre></div>
+<p>怎么做到的呢？具体的语言技巧放在后面再讲，先来理清思路。</p>
+<p>首先，要能在编译过程中，实现对模版中存在的占位符的解析，这是参数类型推导的前提，这也是最容易想到的。</p>
+<p>其次，这里的参数列表是 <strong>可变</strong> 的，且
+<strong>类型不尽相同</strong> 。用以表达的类型肯定不能是
+<code>Array[A]</code>，<code>Seq[A]</code> 和 <code>List[A]</code>。
+貌似只有 <code>Tuple2[A, B]</code>， <code>Tuple3[A, B, C]</code>
+等等。可惜，它们是固定长度的，满足不了可变的要求。</p>
+<p>真的吗？我在上一篇文章里，可是提到了 Scala3 中有关 <code>Tuple</code>
+的新特性，正好应对这里的需求。</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="op">:</span><span class="kw">type</span> <span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;no placeholder&quot;</span><span class="op">)</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>EmptyTuple <span class="op">=&gt;</span> <span class="bu">Unit</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="op">:</span><span class="kw">type</span> <span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;age: %d&quot;</span><span class="op">)</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="bu">Int</span> <span class="op">*:</span> EmptyTuple <span class="op">=&gt;</span> <span class="bu">Unit</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="op">:</span><span class="kw">type</span> <span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;name: %s, age: %d&quot;</span><span class="op">)</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a><span class="op">(</span><span class="ex">String</span><span class="op">,</span> <span class="bu">Int</span><span class="op">)</span> <span class="op">=&gt;</span> <span class="bu">Unit</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co">// (String, Int) =:= String *: Int *: EmptyTuple</span></span></code></pre></div>
+<p>看出规律了吧，可变的参数类型可以通过 <code>*:</code> 和
+<code>EmptyTuple</code> 衔接来实现。</p>
+<p>接下来，我们看要怎么实现编译期的字符串解析。Scala3 提供了
+<strong>Match Types</strong> <a href="#fn6" class="footnote-ref"
+id="fnref6" role="doc-noteref"><sup>6</sup></a> 可以做到。</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">type</span> IsA<span class="op">[</span>S<span class="op">]</span> <span class="op">&lt;:</span> <span class="ex">Boolean</span> <span class="op">=</span> S <span class="cf">match</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="cf">case</span> <span class="st">&quot;A&quot;</span> <span class="op">=&gt;</span> <span class="kw">true</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="cf">case</span> _   <span class="op">=&gt;</span> <span class="kw">false</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> summon<span class="op">[</span>IsA<span class="op">[</span><span class="st">&quot;A&quot;</span><span class="op">]</span> <span class="op">=:=</span> <span class="kw">true</span><span class="op">]</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res1<span class="op">:</span> <span class="kw">true</span> <span class="op">=:=</span> <span class="kw">true</span> <span class="op">=</span> generalized constraint</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> summon<span class="op">[</span>IsA<span class="op">[</span><span class="st">&quot;&quot;</span><span class="op">]</span> <span class="op">=:=</span> <span class="kw">false</span><span class="op">]</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res2<span class="op">:</span> <span class="kw">false</span> <span class="op">=:=</span> <span class="kw">false</span> <span class="op">=</span> generalized constraint</span></code></pre></div>
+<p><code>IsA[S]</code> 定义了对类型参数 <code>S</code>
+的匹配模式。即，当为 <code>"A"</code> 时，<code>IsA["A"]</code>
+的真正类型是 <code>true</code>。</p>
+<p>对于 <code>"A"</code> 是类型表示陌生的朋友，可以了解一下知识点
+<strong>Literal Types</strong> <a href="#fn7" class="footnote-ref"
+id="fnref7"
+role="doc-noteref"><sup>7</sup></a>。这里多得不说了，看下面几行体会体会。</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">val</span> a<span class="op">:</span> <span class="st">&quot;A&quot;</span> <span class="op">=</span> <span class="st">&quot;A&quot;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> a<span class="op">:</span> <span class="st">&quot;A&quot;</span> <span class="op">=</span> A</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">val</span> a<span class="op">:</span> <span class="st">&quot;B&quot;</span> <span class="op">=</span> <span class="st">&quot;A&quot;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> <span class="op">[</span>E007<span class="op">]</span> <span class="ex">Type</span> Mismatch <span class="ex">Error</span><span class="op">:</span> <span class="op">--</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">|</span><span class="kw">val</span> a<span class="op">:</span> <span class="st">&quot;B&quot;</span> <span class="op">=</span> <span class="st">&quot;A&quot;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>             <span class="op">^^^</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>Found<span class="op">:</span>    <span class="op">(</span><span class="st">&quot;A&quot;</span> <span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>Required<span class="op">:</span> <span class="op">(</span><span class="st">&quot;B&quot;</span> <span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> error found</span></code></pre></div>
+<p>说回来，有了 <strong>Match Types</strong> 和 <strong>Literal
+Types</strong> ，就差字符串的操作了</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> summon<span class="op">[</span>CharAt<span class="op">[</span><span class="st">&quot;age&quot;</span><span class="op">,</span> <span class="dv">0</span><span class="op">]</span> <span class="op">=:=</span> <span class="ch">&#39;a&#39;</span><span class="op">]</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res3<span class="op">:</span> a <span class="op">=:=</span> a <span class="op">=</span> generalized constraint</span></code></pre></div>
+<p>像 <code>CharAt</code> 等类似字符串操作的函数，Scala
+标准库都提供了对应的 <strong>Match Types</strong> <a href="#fn8"
+class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>。
+余下的，我想你大概可以脑补了，自己动手尝试一下吧，乐趣满满。</p>
+<p>到这里还有一个小瑕疵，如下</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;no placeholder&quot;</span><span class="op">)()</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> <span class="op">[</span>E171<span class="op">]</span> <span class="ex">Type</span> <span class="ex">Error</span><span class="op">:</span> <span class="op">----------------------</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">|</span><span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;no placeholder&quot;</span><span class="op">)()</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|^^^^^^^^^^^^^^^^^^^^^^^^^^</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>missing argument <span class="cf">for</span> parameter v1 </span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>of method apply in </span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span><span class="kw">trait</span> Function1<span class="op">:</span> <span class="op">(</span>v1<span class="op">:</span> EmptyTuple<span class="op">):</span> <span class="bu">Unit</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> error found</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">Printf</span><span class="op">(</span><span class="st">&quot;no placeholder&quot;</span><span class="op">)(</span>EmptyTuple<span class="op">)</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>no placeholder</span></code></pre></div>
+<p><code>Tuple</code> 类型带来参数输入的不便，尤其在参数数量为
+<code>0</code> 和 <code>1</code>
+的时候。解决办法，我这里提供一个思路。</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Args<span class="op">[</span>S<span class="op">]</span> <span class="op">&lt;:</span> Tuple <span class="op">=</span> <span class="op">???</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> <span class="ex">Result</span><span class="op">[</span>T <span class="op">&lt;:</span> Tuple<span class="op">]:</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> Out</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">apply</span><span class="op">(</span>pattern<span class="op">:</span> <span class="ex">String</span><span class="op">):</span> Out</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>given string<span class="op">:</span> <span class="ex">Result</span><span class="op">[</span>EmptyTuple<span class="op">]</span> <span class="kw">with</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">type</span> Out <span class="op">=</span> <span class="bu">Unit</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">apply</span><span class="op">(</span>pattern<span class="op">:</span> <span class="ex">String</span><span class="op">):</span> Out <span class="op">=</span> <span class="fu">print</span><span class="op">(</span>pattern<span class="op">)</span></span></code></pre></div>
+<p>假定，<code>Arg[S]</code>
+实现了对模版占位符的解析，并推导出参数列表类型 <code>Tuple</code>。</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">object</span> Printf<span class="op">:</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">apply</span><span class="op">(</span>s<span class="op">:</span> <span class="ex">String</span><span class="op">)(</span>using </span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    r<span class="op">:</span> <span class="ex">Result</span><span class="op">[</span>Args<span class="op">[</span>s<span class="op">.</span><span class="kw">type</span><span class="op">]]</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">):</span> r<span class="op">.</span>Out <span class="op">=</span> <span class="fu">r</span><span class="op">(</span>s<span class="op">)</span></span></code></pre></div>
+<p>那么，当 <code>Tuple</code> 不同时，编译器自动选择对应的
+<code>Result[T &lt;: Tuple]</code> 派生来应对 <a href="#fn9"
+class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>。
+完整的代码可阅读原文或参见脚注链接查阅 <a href="#fn10"
+class="footnote-ref" id="fnref10"
+role="doc-noteref"><sup>10</sup></a>。</p>
+<h2 id="结语">结语</h2>
+<p>实事求是，仅就 <code>Printf</code>
+这样的类型安全护栏个案，只是蜻蜓点水，对于提升全局工程质量而言，可能是无足挂齿的。
+但重要的是，类型驱动开发的思维方式，走在了测试先行的更前面。它能让编译器更懂业务逻辑，前提是我们对类型的思考真正的放在业务的层面。</p>
+<p>PS：若觉得以上内容还不错，还请记得转发分享给你的同事或同行，这对我最大的鼓励。</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://www.letsmakebettersoftware.com/2017/09/test-driven-development-tdd.html"
+class="uri"
+target="_blank">https://www.letsmakebettersoftware.com/2017/09/test-driven-development-tdd.html</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://en.wikipedia.org/wiki/Test-driven_development" class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Test-driven_development</a><a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a
+href="https://www.manning.com/books/type-driven-development-with-idris"
+class="uri"
+target="_blank">https://www.manning.com/books/type-driven-development-with-idris</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>顺带演示一些 Scala3 的新特性。<a href="#fnref4"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a
+href="https://docs.oracle.com/javase/8/docs/api/index.html?java/util/Formatter.html"
+class="uri"
+target="_blank">https://docs.oracle.com/javase/8/docs/api/index.html?java/util/Formatter.html</a><a
+href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a
+href="https://docs.scala-lang.org/scala3/reference/new-types/match-types.html"
+class="uri"
+target="_blank">https://docs.scala-lang.org/scala3/reference/new-types/match-types.html</a><a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a
+href="https://medium.com/@hao.qin/scala-3-enlightenment-unleash-the-power-of-literal-types-41e3436b4df8"
+class="uri"
+target="_blank">https://medium.com/@hao.qin/scala-3-enlightenment-unleash-the-power-of-literal-types-41e3436b4df8</a><a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p><a
+href="https://www.scala-lang.org/api/current/scala/compiletime/ops/string$.html#Types"
+class="uri"
+target="_blank">https://www.scala-lang.org/api/current/scala/compiletime/ops/string$.html#Types</a><a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p><a
+href="https://docs.scala-lang.org/scala3/book/types-dependent-function.html"
+class="uri"
+target="_blank">https://docs.scala-lang.org/scala3/book/types-dependent-function.html</a><a
+href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p><a
+href="https://github.com/zhongl/type-driven-development-with-scala3/blob/main/ch06/printf.worksheet.sc"
+class="uri"
+target="_blank">https://github.com/zhongl/type-driven-development-with-scala3/blob/main/ch06/printf.worksheet.sc</a><a
+href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/plog"><span class="icons-outlined align-bottom">tag</span>码志</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2024 zhongl.fun</p></footer></main></body></html>
