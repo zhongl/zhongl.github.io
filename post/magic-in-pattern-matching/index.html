@@ -1,0 +1,258 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>模式匹配里的魔法</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="鲜为人知编译器的工作细节，大多会被我们叫做“魔法”。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-09-04">Sep 4, 2024</time><h1>模式匹配里的魔法</h1></header><div class="lead">
+<p>鲜为人知编译器的工作细节，大多会被我们叫做“魔法”。</p>
+</div>
+<p>接上回，我声明了 <code>type Mutation = (URL, Seq[Element])</code>
+，即将特定 <code>URL</code> 页面内容中 新增的若干
+<code>Seq[Element]</code> 称之为 <code>Mutation</code>
+（变化）。可想而知，因 <em>变化</em> 产生的后续代码逻辑，都得从判断
+<em>变化</em> 满足什么条件开始。为了让代码看上去简洁且富表达力，我给
+<strong>模式匹配</strong> 施加一些魔法🪄。</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="ex">Callback</span> <span class="op">=</span> Mutation <span class="op">=&gt;</span> <span class="bu">Unit</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback<span class="op">:</span> <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span>url<span class="op">,</span> added<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p>在 <code>URL</code> 中，我最关心是 <code>pathname</code> <a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>和 <code>search</code> <a href="#fn2"
+class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>两部分。以所有跑步活动的页面链接为例，</p>
+<figure>
+<img src="runnings.png" alt="插入速心比走势的活动页" />
+<figcaption aria-hidden="true">插入速心比走势的活动页</figcaption>
+</figure>
+<p>其 <code>pathname</code> 为
+<code>/modern/activities</code>，<code>search</code> 是
+<code>activityType=running</code>。然后，我施加第一道，最入门也最核心的魔法
+<a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>。</p>
+<h2 id="消失的-unapply">消失的 <code>unapply</code></h2>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">object</span> <span class="ex">URL</span><span class="op">:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">unapply</span><span class="op">(</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    u<span class="op">:</span> <span class="ex">URL</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">):</span> <span class="ex">Option</span><span class="op">[(</span><span class="ex">String</span><span class="op">,</span> <span class="ex">String</span><span class="op">)]</span> <span class="op">=</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">Some</span><span class="op">(</span>u<span class="op">.</span>pathname<span class="op">,</span> u<span class="op">.</span>search<span class="op">)</span></span></code></pre></div>
+<p><code>unapply</code>
+是一个特殊命名的方法，如同魔法的咒语，施法效果为</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback<span class="op">:</span> <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span>pathname<span class="op">,</span> search<span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p>给不明觉厉的朋友翻译翻译，就是：</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback<span class="op">:</span> <span class="ex">Callback</span> <span class="op">=</span> <span class="op">(</span>url<span class="op">,</span> _<span class="op">)</span> <span class="op">=&gt;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">val</span> opt <span class="op">=</span> <span class="ex">URL</span><span class="op">.</span><span class="fu">unapply</span><span class="op">(</span>url<span class="op">)</span> </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> opt<span class="op">.</span>isDefined then</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">val</span> <span class="op">(</span>pathname<span class="op">,</span> search<span class="op">)</span> <span class="op">=</span> opt<span class="op">.</span>get</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">???</span></span></code></pre></div>
+<p>简言之，调用 <code>unapply</code>
+，判断返回值，若存在则赋值并继续，这三个步骤精炼为了一行代码。有点
+<em>解构赋值</em> <a href="#fn4" class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a>那味了，但远不止如此。接下来，就是要分别判断
+<code>pathname</code> 和 <code>search</code> 了，但依旧不用
+<code>if</code>，</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback<span class="op">:</span> <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span><span class="st">&quot;/modern/activities&quot;</span><span class="op">,</span> <span class="st">&quot;activityType=running&quot;</span><span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p>可能有 Scala
+的朋友看到这里，觉得太小儿科吧。别走，下面我要开始装逼了！</p>
+<p>注意，以上 <code>search</code> 是最单纯的情况。实际上，它可能是：</p>
+<ul>
+<li><code>activityType=cycling</code></li>
+<li><code>activityType=running&amp;search=MAF</code></li>
+<li><code>&lt;empty&gt;</code></li>
+</ul>
+<p>为了简洁又有（表达）力，我写成这样，</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback<span class="op">:</span> <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span>_<span class="op">,</span> Param<span class="op">[</span><span class="st">&quot;activityType&quot;</span><span class="op">](</span><span class="st">&quot;running&quot;</span><span class="op">)),</span> _<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p>如何，有没有一点小小的震撼？这就是在基础的魔法上，叠加亿点点🤏高阶魔法了。</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">object</span> Param<span class="op">:</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> unapply<span class="op">[</span>S <span class="op">&lt;:</span> <span class="ex">String</span><span class="op">:</span> ValueOf<span class="op">](</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    sp<span class="op">:</span> URLSearchParams </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">):</span> <span class="ex">Option</span><span class="op">[</span><span class="ex">String</span><span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">val</span> key <span class="op">=</span> valueOf<span class="op">[</span>S<span class="op">]</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Option</span><span class="op">.</span>when</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>      <span class="op">(</span>sp<span class="op">.</span><span class="fu">has</span><span class="op">(</span>key<span class="op">))</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>      <span class="op">(</span>sp<span class="op">.</span><span class="fu">get</span><span class="op">(</span>key<span class="op">))</span></span></code></pre></div>
+<div class="alert" data-icon="">
+<p>为了配合 <code>Param</code> ，解构 <code>URL</code> 时需要用
+<code>searchParams</code> <a href="#fn5" class="footnote-ref"
+id="fnref5" role="doc-noteref"><sup>5</sup></a>，比 <code>search</code>
+实现更简单。</p>
+</div>
+<p>其中涉及一个冷门知识点: <strong>Literal-based singleton
+types</strong> （字面单例类型）<a href="#fn6" class="footnote-ref"
+id="fnref6" role="doc-noteref"><sup>6</sup></a>。简言之，使用
+<code>valueOf</code> 可以获取字面单例类型 <code>"activityType"</code>
+的字符串值（也就是它自身）。当然，还需要辅以
+<code>[S &lt;: String: ValueOf]</code> 的声明，这又涉及到知识点
+<strong>Type Bounds</strong> （类型约束）<a href="#fn7"
+class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> 和
+<strong>Context Bounds</strong> （上下文绑定） <a href="#fn8"
+class="footnote-ref" id="fnref8"
+role="doc-noteref"><sup>8</sup></a>。</p>
+<p>以上写法源自 Scala Contributors 里「More Useful Pattern
+Matching」的帖子 <a href="#fn9" class="footnote-ref" id="fnref9"
+role="doc-noteref"><sup>9</sup></a>。贴主是想讨论 Scala 要不要支持
+<strong>Parameterized Active Patterns</strong> （参数化激活模式）<a
+href="#fn10" class="footnote-ref" id="fnref10"
+role="doc-noteref"><sup>10</sup></a>。可惜楼歪了，引发了一场有趣的代码竞赛，即便是有
+Lihaoyi 回帖正楼也无事于补，感兴趣的朋友参见脚注链接。</p>
+<h2 id="string-interpolate-的意外之用">String Interpolate
+的意外之用</h2>
+<p>作为第一个回帖的人，我可能有一点点歪楼的责任😂。但 <strong>String
+Interpolate</strong> （字符串插值）<a href="#fn11" class="footnote-ref"
+id="fnref11"
+role="doc-noteref"><sup>11</sup></a>也可用于模式匹配，这绝对是 Scala Doc
+都没提到的“冰系”魔法。</p>
+<p>还是拿 <code>pathname</code> 举例说明。假设，我要匹配个人资料页，</p>
+<pre><code>/modern/profile/{id}</code></pre>
+<p>代码可以这么写，</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback<span class="op">:</span> <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span><span class="ss">s&quot;</span><span class="st">/modern/profile/</span><span class="ss">$id&quot;</span><span class="op">,</span> _<span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p>熟悉 Scala
+的朋友，咋看可能会有点「地铁老人看手机」，其实细想想还挺符合直觉的用法。既然都说到这了，不妨再容我炫个十多年前的雕虫小技。</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback<span class="op">:</span> <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span>r<span class="st">&quot;/modern/profile/(</span><span class="ch">\\</span><span class="st">d+)$id&quot;</span><span class="op">,</span> _<span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p><code>r</code> 不是 <code>StringContext</code> 内置的，是通过
+<code>Regex</code> 来扩展实现的 <a href="#fn12" class="footnote-ref"
+id="fnref12" role="doc-noteref"><sup>12</sup></a></p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> scala<span class="op">.</span>util<span class="op">.</span>matching<span class="op">.</span>Regex</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">extension</span> <span class="op">(</span>sc<span class="op">:</span> StringContext<span class="op">)</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> r <span class="op">=</span> <span class="fu">Regex</span><span class="op">(</span>sc<span class="op">.</span>parts<span class="op">.</span>mkString<span class="op">)</span></span></code></pre></div>
+<p>这个技巧是从 Hacking Scala 上学来的<a href="#fn13"
+class="footnote-ref" id="fnref13"
+role="doc-noteref"><sup>13</sup></a>，在大量字符数据处理场景中相当好用，省去很多无聊的声明定义语句，这也是「More
+Useful Pattern Matching」帖子背后的痛点。</p>
+<h2 id="魔法不为炫技">魔法不为炫技</h2>
+<p>当年在厂内使用这些魔法，没少被同学背地里吐槽😂，真是苦了他们了。我使用的初衷，当然不是为了炫技，而是让代码简洁有力。只是用上头了，难免把握不好度，在团队协同效率上造成额外隐形成本。</p>
+<p>这不是一个用或不用的二元选择，而是一种权衡。今天，魔法我依然在用，只不过用的时候考虑的更多些。</p>
+<h2 id="文末彩蛋">文末彩蛋</h2>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> scala<span class="op">.</span>languageFeature<span class="op">.</span>implicitConversions</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> sourcecode<span class="op">.</span><span class="ex">Name</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Extract<span class="op">[</span>A<span class="op">,</span> B<span class="op">]</span> </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">=</span> A <span class="op">=&gt;</span> <span class="ex">Option</span><span class="op">[</span>B<span class="op">]</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> LiteralExtract<span class="op">[</span>A<span class="op">,</span> B<span class="op">]</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">=</span> <span class="ex">String</span> <span class="op">=&gt;</span> Extract<span class="op">[</span>A<span class="op">,</span> B<span class="op">]</span></span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>given <span class="op">[</span>A<span class="op">,</span> B<span class="op">]:</span> Conversion<span class="op">[</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  Extract<span class="op">[</span>A<span class="op">,</span> B<span class="op">],</span> </span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="bu">PartialFunction</span><span class="op">[</span>A<span class="op">,</span> B<span class="op">]</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a><span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  _<span class="op">.</span>unlift</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> <span class="ex">Attr</span><span class="op">:</span> LiteralExtract<span class="op">[</span><span class="ex">Element</span><span class="op">,</span> <span class="ex">String</span><span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  k <span class="op">=&gt;</span> e <span class="op">=&gt;</span></span>
+<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Option</span><span class="op">.</span>when</span>
+<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>      <span class="op">(</span>e<span class="op">.</span><span class="fu">hasAttribute</span><span class="op">(</span>k<span class="op">))</span></span>
+<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>      <span class="op">(</span>e<span class="op">.</span><span class="fu">getAttribute</span><span class="op">(</span>k<span class="op">))</span></span>
+<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> `href` <span class="op">=</span> <span class="ex">Attr</span><span class="op">(</span></span>
+<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a>  implicitly<span class="op">[</span><span class="ex">Name</span><span class="op">].</span>value</span>
+<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="op">)</span>          </span>
+<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> callback<span class="op">:</span> <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span>_<span class="op">,</span> added<span class="op">)</span> <span class="op">=&gt;</span></span>
+<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> <span class="cf">case</span> `href`<span class="op">(</span>url<span class="op">)</span> <span class="op">&lt;-</span> added <span class="cf">do</span></span>
+<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a>      <span class="op">???</span></span></code></pre></div>
+<p>两点提示：</p>
+<ul>
+<li><code>sourcecode.Name</code> <a href="#fn14" class="footnote-ref"
+id="fnref14" role="doc-noteref"><sup>14</sup></a></li>
+<li><code>unlift</code> <a href="#fn15" class="footnote-ref"
+id="fnref15" role="doc-noteref"><sup>15</sup></a></li>
+</ul>
+<p>待续回见。</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname"
+class="uri"
+target="_blank">https://developer.mozilla.org/en-US/docs/Web/API/URL/pathname</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://developer.mozilla.org/en-US/docs/Web/API/URL/search"
+class="uri"
+target="_blank">https://developer.mozilla.org/en-US/docs/Web/API/URL/search</a><a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a
+href="https://docs.scala-lang.org/tour/extractor-objects.html"
+class="uri"
+target="_blank">https://docs.scala-lang.org/tour/extractor-objects.html</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><a
+href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment"
+class="uri"
+target="_blank">https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment</a><a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a
+href="https://developer.mozilla.org/en-US/docs/Web/API/URL/searchParams"
+class="uri"
+target="_blank">https://developer.mozilla.org/en-US/docs/Web/API/URL/searchParams</a><a
+href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a href="https://docs.scala-lang.org/sips/42.type.html"
+class="uri"
+target="_blank">https://docs.scala-lang.org/sips/42.type.html</a><a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a
+href="https://docs.scala-lang.org/tour/upper-type-bounds.html"
+class="uri"
+target="_blank">https://docs.scala-lang.org/tour/upper-type-bounds.html</a><a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p><a
+href="https://docs.scala-lang.org/scala3/book/ca-context-bounds.html#inner-main"
+class="uri"
+target="_blank">https://docs.scala-lang.org/scala3/book/ca-context-bounds.html#inner-main</a><a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p><a
+href="https://contributors.scala-lang.org/t/more-useful-pattern-matching/6751"
+class="uri"
+target="_blank">https://contributors.scala-lang.org/t/more-useful-pattern-matching/6751</a><a
+href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p><a
+href="https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/active-patterns#parameterized-active-patterns"
+class="uri"
+target="_blank">https://learn.microsoft.com/en-us/dotnet/fsharp/language-reference/active-patterns#parameterized-active-patterns</a><a
+href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p><a
+href="https://docs.scala-lang.org/scala3/book/string-interpolation.html"
+class="uri"
+target="_blank">https://docs.scala-lang.org/scala3/book/string-interpolation.html</a><a
+href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p><a
+href="https://docs.scala-lang.org/tour/regular-expression-patterns.html#inner-main"
+class="uri"
+target="_blank">https://docs.scala-lang.org/tour/regular-expression-patterns.html#inner-main</a><a
+href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p><a
+href="https://hacking-scala.tumblr.com/post/50360896036/regular-expressions-interpolation-in-pattern"
+class="uri"
+target="_blank">https://hacking-scala.tumblr.com/post/50360896036/regular-expressions-interpolation-in-pattern</a><a
+href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p><a
+href="https://github.com/com-lihaoyi/sourcecode/tree/main" class="uri"
+target="_blank">https://github.com/com-lihaoyi/sourcecode/tree/main</a><a
+href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p><a
+href="https://docs.scala-lang.org/sips/converters-among-optional-functions-partialfunctions-and-extractor-objects.html#inner-main"
+class="uri"
+target="_blank">https://docs.scala-lang.org/sips/converters-among-optional-functions-partialfunctions-and-extractor-objects.html#inner-main</a><a
+href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/plog"><span class="icons-outlined align-bottom">tag</span>码志</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2024 zhongl.fun</p></footer></main></body></html>
