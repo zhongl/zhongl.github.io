@@ -1,0 +1,95 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>我是怎么分析跑步数据的</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="个人观点，仅供消遣" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-09-09">Sep 9, 2024</time><h1>我是怎么分析跑步数据的</h1></header><div class="lead">
+<p><strong>个人观点，仅供消遣</strong></p>
+</div>
+<p>作为一名“面向数据”的初跑者，对于自己跑步过程中的主观感受，我都尝试着从数据中找到合理的解释，以便归纳出科学的经验。</p>
+<p>看过之前文章的朋友，应该知道我写了个 Chrome
+扩展程序来方便自己分析数据 <a href="#fn1" class="footnote-ref"
+id="fnref1"
+role="doc-noteref"><sup>1</sup></a>。这里就细说一下，我是怎么分析的。</p>
+<h2 id="佳明-connect">佳明 Connect</h2>
+<p>我的跑步数据都来自佳明手表。佳明
+Connect（网站或APP）已经提供了各种数据的呈现方式。</p>
+<figure>
+<img src="0-garmin-activity-traces.png"
+alt="佳明 Connect 上配速叠加心率和步频的变化趋势图" />
+<figcaption aria-hidden="true">佳明 Connect
+上配速叠加心率和步频的变化趋势图</figcaption>
+</figure>
+<p>维度丰富，数据够细，咋看依然不明觉厉。</p>
+<p>看久了，似乎无法回答，我现在的有氧能力处于什么水平？我的水平最近是变好了还是差了？当然，要回答它们，我发现其实不用看这么细，在活动列表看就好。</p>
+<figure>
+<img src="garmin-activities.png" alt="佳明 Connect 活动检索页" />
+<figcaption aria-hidden="true">佳明 Connect 活动检索页</figcaption>
+</figure>
+<p>根据列表提供的距离，时间，平均配速，平均心率等指标项，从上往下也能看个大概，
+也就 <strong>只能是个大概</strong> 了。比如，对比一下 12日 和
+18日的数据，我是很难确信有氧能力是否有所提升。毕竟，配速提高的同时，心率也提高了。</p>
+<h2 id="速心比">速心比</h2>
+<blockquote>
+<p><strong>当心率稳定在最大有氧能力的小幅区间内，这时的配速才是能力的量化体现。</strong></p>
+</blockquote>
+<p><cite>鄙人，为什么我开始看重跑步时的心率</cite></p>
+<p>由此可见，用 <strong>平均速度</strong> 除以 <strong>平均心率</strong>
+得到就是 <strong>有氧能力</strong> 的数值，简称
+<strong>速心比</strong>。</p>
+<div class="alert" data-icon="">
+<p>注意，这不一定是最大有氧能力。除非，这个心率是个人的最大有氧心率。</p>
+</div>
+<p>因此，扩展程序的 <code>v1.x.x</code>
+版本仅就跑步的速心比做了最简单的折线图处理。</p>
+<figure>
+<img src="mpb-activities.png" alt="速心比变化趋势" />
+<figcaption aria-hidden="true">速心比变化趋势</figcaption>
+</figure>
+<p>这么一来，有氧能力水平与趋势就变得很直观了。具体解读一下：</p>
+<ul>
+<li>整体水平在 <code>1.0 ~ 1.1</code> 之间；</li>
+<li>大体按 <strong>周</strong> 的规律，先起后伏；</li>
+<li>中间有一次无氧间歇的 “异常” 数据显得过分突出。</li>
+</ul>
+<h2 id="速心比分布">速心比分布</h2>
+<p>上图虽然简单明了，但也存在数据噪声。我的每次跑步活动是，至少存在暖身阶段的，这个阶段的配速和心率，会让整体平均值存在偏差。跑过的朋友都有类似的经历，开始的一两公里，速度很快且心率不高，此时有氧供能系统还没有充分参与，这会导致有氧能力偏高的假象。</p>
+<p>另外，单一平均值丢失了单次跑步的过程信息，比如每公里速心比变化情况。为此，我在
+<code>v2.x.x</code> 版本开始，将折线图替换为能体现速心比分布的
+<strong>盒子图</strong>。</p>
+<figure>
+<img src="mpb-history.png" alt="速心比分布变化走势" />
+<figcaption aria-hidden="true">速心比分布变化走势</figcaption>
+</figure>
+<p>此时，图中每个小盒子代表的是，除暖冷阶段外，每公里速心比的分布情况，比如最大，最小，平均等。在保留速心比变化的整体趋势外，可以根据盒子的长短，感知速心比变化幅度的走势。</p>
+<p>盒子越短，表明速心比保持越平稳，大概率说明身体状态不错，亦或是有氧能力水平尚有盈余。理想的情况下，盒子长度应该是逐渐缩短的，也表明了能力水平是稳步提升的。</p>
+<p>那盒子长了就意味着能力变差吗？只能说大概率是，也偶有例外。像上图中第二个和第四个的长度变化的过分剧烈，这时就需要分析细节数据了。点击小盒子，可看到当日的细节数据。</p>
+<h2 id="速心比关联走势">速心比关联走势</h2>
+<figure>
+<img src="mpb-activity.png" alt="速心比关联走势" />
+<figcaption aria-hidden="true">速心比关联走势</figcaption>
+</figure>
+<p>蓝线是速心比（<code>mpb</code>），橙线是
+<strong>每分平均心率</strong>（<code>bpm</code>），如此低的心率，通常仅出现在暖身阶段，但这已经是正式跑步阶段了，依旧低是不正常的，也与当时的实际身体感受不相符。其原因是，天冷手表佩戴的方式有问题，导致心率读数有误，后续调整才恢复正常。那么，这天的数据其实是脏掉了，应排除。</p>
+<div class="alert" data-icon="">
+<p>友情提示，为保证心率采样尽可能准，手表务必要紧贴腕部。冬季跑步不得不长袖防冻，又需要频繁看表的话，还是推荐佩戴心率带更靠谱。</p>
+</div>
+<p>选择右侧图例中的<code>spm</code>，将心率切换为
+<strong>每分平均步频</strong>，观察步频与速心比的变化相关性。个人认为，步频是可以主动调整，并直接影响心率和配速，是否存在个人最佳的步频，对比二者或许能帮我发现一些端倪。</p>
+<p>配速毕竟还是主流跑步指标，建立配速与速心比的对应也是符合直觉的需要。选择
+<code>/km</code>，可将心率切换为 <strong>每公里平均配速</strong>
+，以建立二者的关联。</p>
+<p>最后，点击图右上角的房子🏠，则能回到刚刚的分布走势，再进行其它相关分析。</p>
+<h2 id="未来可期">未来可期</h2>
+<p>以上，仅是我非常个人的浅度思考与摸索，远谈不上有什么价值。当然也不会止步于此，后续还会整合睡眠数据，琢磨一下恢复与训练效果关系。</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://chrome.google.com/webstore/detail/nojpfacijldambjcnpbpneghbaefnlme"
+class="uri"
+target="_blank">https://chrome.google.com/webstore/detail/nojpfacijldambjcnpbpneghbaefnlme</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/hobby"><span class="icons-outlined align-bottom">tag</span>不务正业</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2025 zhongl.fun</p></footer></main></body></html>

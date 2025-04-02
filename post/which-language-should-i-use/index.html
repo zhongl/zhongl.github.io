@@ -1,0 +1,63 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>该用哪门语言</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="抛开剂量谈毒性，那是耍流氓！" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-08-17">Aug 17, 2024</time><h1>该用哪门语言</h1></header><div class="lead">
+<p>抛开剂量谈毒性，那是耍流氓！</p>
+</div>
+<figure>
+<img src="0-d581e2cd8d797855c900af767cf248529fb9a5de.png"
+alt="上图来自 Comparing Scala.js and JScala" />
+<figcaption aria-hidden="true">上图来自 Comparing Scala.js and JScala<a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></figcaption>
+</figure>
+<p>我真正能上手出活的编程语言，一只手就能数过来。该用哪门语言，按理不应该是个问题，可能是习惯性想太多吧（这或许不是一个好习惯）。</p>
+<p>为了方便分析自己跑步的数据，我自己写了一个 Chrome 扩展程序<a
+href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>。一开始我就纠结，该用哪门语言？按偏好，无疑是
+Scala ；论速度，应该选
+JavaScript。这里的速度，到不是指运行速度，而是指从编码到验证的周期有多快？</p>
+<p>起初，无论是开发平台（Chrome
+扩展），还是业务领域（运动数据分析），我已有的经验令系统性的工程决策（考量）无从谈起。眼下在最短时间内，基于官方文档的范例代码拓展出一个能跑的原型，大概率是启动成本最低的选择。</p>
+<div class="alert" data-icon="">
+<p>原型阶段，最重要的莫过于敏捷地验证想法（或方案）的可行性。</p>
+</div>
+<p>然而，这么一句原则只能辅助关键决策，具体的问题还是需要细化的拆解，</p>
+<figure>
+<img src="d738eff07bb865f160c17e93e6938769e5826025.png"
+alt="问题拆解树" />
+<figcaption aria-hidden="true">问题拆解树</figcaption>
+</figure>
+<p>直到所有叶子节点能够指导具体的代码实现。因此，我选择用 JavaScript
+一路 A 过去<a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>，逢山开路，遇水架桥。</p>
+<p>吃干抹净，代码自然不太好看，有很多需要完善的地方。这摸着石头过河的经验已经积累了一些了，正好开始重构代码。面对
+JavaScript
+的持续重构，我这个被静态类型语言宠坏的程序员，着实有些力不从心了。</p>
+<p>TypeScript
+会是一个好的选择吗？它具备不错的类型特性，对应的编辑器和编译器成熟到不言自明。代码的迁移过程理论上也会是很平滑的，它肯定会是一个好选择。只不过对我而言，不是。</p>
+<p>我并不排斥学习一门新的语言，而且如今主流语言的特性大致趋同，学习门槛本身不高。门槛高的是，工具生态链。选择
+TypeScript，意味着接下来会有更多选择要纠结。相反，Scala.js
+的背后的工具生态链，要么没得选，要么我轻车熟路。</p>
+<p>待续回见。</p>
+<div class="alert" data-icon="">
+<p>以上是我决定开启的一个系列合集的开篇内容，以较为松散且不那么严谨的标准，去记录我开发过程中的所思所想。这里的记录，大概率会是当时很明智，事后很弱智的。主题随机，更新随意，博君一笑，引以为戒。</p>
+</div>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://sebnozzi.github.io/84/scala-to-javascript-comparison/"
+class="uri"
+target="_blank">https://sebnozzi.github.io/84/scala-to-javascript-comparison/</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://github.com/hanabix/mpb" class="uri"
+target="_blank">https://github.com/hanabix/mpb</a><a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>星际争霸梗<a href="#fnref3" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/plog"><span class="icons-outlined align-bottom">tag</span>码志</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2025 zhongl.fun</p></footer></main></body></html>

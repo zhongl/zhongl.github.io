@@ -1,0 +1,283 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>我的开源经历</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="开源并不是多么牛逼事情，至少在我今天看来是这样的。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2016-08-25">Aug 25, 2016</time><h1>我的开源经历</h1></header><div class="lead">
+<p>开源并不是多么牛逼事情，至少在我今天看来是这样的。</p>
+</div>
+<p>为什么还值得拿出来一说，是因为没有参与其中的人都只看到了开源的结果，而完全不了解产生的过程。
+这其中发生哪些有趣事情，又是怎样的机缘巧合，一切的细节是值得耐人寻味的。</p>
+<h2 id="hs4j-kit">hs4j-kit</h2>
+<p>2010年有个名为<strong>HandlerSocket-Plugin-for-MySQL</strong><a
+href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>的开源项目，它号称可以将 MySQL
+打造成一个高性能的 NoSQL
+服务，提供超过<code>750,000 qps</code>访问能力<a href="#fn2"
+class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>，这一下触及到了不少热衷于性能的技术人的<code>G</code>点。</p>
+<p>在随后非常短的时间里，这些人跃跃欲试于自己的工作环境中，并孵化出了不少衍生的开源项目。其中有一个就是<strong>hs4j</strong><a
+href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>
+，它提供了支持<strong>Java</strong>语言使用<strong>HandlerSocket</strong>的<strong>API</strong>。</p>
+<p>当时，我的主要工作是在为 HDFS 的 NameNode HA 的方案，而 hs4j
+恰好能为这个方案提供一种高可靠且高性能存储的可能。在使用的过程，我发现
+hs4j 提供的接口用起来就像 JDBC
+的一样繁复啰嗦，由此萌发一个思路：<strong>用类似 ORM
+方式简化编码实现</strong>。然后我就写了 <strong>hs4j-kit</strong><a
+href="#fn4" class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a>，并联系原作者<a href="#fn5"
+class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a>表达了希望贡献给<strong>hs4j</strong>的意愿，他看过代码后非常乐意接收，只是提了一个小小的要求：<strong>提供一份README</strong>。</p>
+<h2 id="ipage">iPage</h2>
+<p>2011年我从淘宝数据平台转岗到淘宝中间件，由于我此前有开发消息中间件的经验<a
+href="#fn6" class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>，因此在新的岗位上，我有一个很重要的使命就是优化另一个历史悠久的消息中间件<strong>Notify</strong><a
+href="#fn7" class="footnote-ref" id="fnref7"
+role="doc-noteref"><sup>7</sup></a>。</p>
+<p><strong>Notify</strong>的架构设计简单巧妙，即将一张存放消息的<strong>表</strong>作为<strong>消息队列</strong>的实现。这样的方案有两点好处：</p>
+<ol type="1">
+<li>利用数据库可靠性和扩展性，大大降低中间件的开发难度</li>
+<li>消息是存储于数据库的，中间件几乎是无状态的，很容易水平扩展以支撑海量的吞吐请求</li>
+</ol>
+<pre><code>+-- Producer --+   
+|              | 
++--------------+ 
+       V
++--- Notify ---+     +-- MySQL ---+
+|   [Queue]    | &lt;-&gt; |  [Table]   |
++--------------+     +------------+
+       V
++-- Consumer --+                    
+|              |                    
++--------------+                    </code></pre>
+<p>消息中间件最重要的使命是缓解依赖系统间<strong>响应能力不匹配</strong>的问题，因此，面对<strong>消息堆积的容忍程度</strong>是消息中间件最为关键的考量指标。<strong>Notify</strong>这一指标完全要仰仗于<strong>MySQL</strong>的表现，这样的表现力要支撑<strong>双11</strong><a
+href="#fn8" class="footnote-ref" id="fnref8"
+role="doc-noteref"><sup>8</sup></a>，需要上百台数据库实例。</p>
+<p>为什么不能像<strong>Kafka</strong><a href="#fn9" class="footnote-ref"
+id="fnref9"
+role="doc-noteref"><sup>9</sup></a>使用文件系统实现队列呢？这样的话，不仅能够节省好多服务器，还能减少其中的网络开销。其实我不是第一个这样想的人，在我之前已经有人尝试实现并开源了，叫<strong>store4j</strong><a
+href="#fn10" class="footnote-ref" id="fnref10"
+role="doc-noteref"><sup>10</sup></a>，只是可靠性远不如数据库的实现，而仅限开发测试环境使用。</p>
+<p>在看过<strong>store4j</strong>的源码后，发现内存索引需要在每次启动时扫描消息队列进行重建。这在大量消息堆积后系统意外重启时，索引重建的过程就会变得很漫长。尽管这类情况平时几乎不太可能出现，可大促活动期间出现的几率立马提升，而且是一旦出现对整个服务链路几乎是致命的。</p>
+<div class="alert" data-icon="">
+<div>
+<p>任何系统都有它的容量极限，超出之后我们是无能为力的。比较妥当的解决办法是：</p>
+<ol type="1">
+<li>根据业务场景评估容量规模，</li>
+<li>单机濒临容量极限时，应能自我保护，重定向部分请求至另外的节点，保持自身的最低服务能力。</li>
+</ol>
+</div>
+</div>
+<p>因此，<strong>改善索引重建速度</strong>是我认为值得去做的一件事情。与<strong>hs4j</strong>不同的是，我并未基于<strong>store4j</strong>源码改进，而是另起炉灶实现了<strong>iPage</strong><a
+href="#fn11" class="footnote-ref" id="fnref11"
+role="doc-noteref"><sup>11</sup></a>，原因是改进索引重建速度的设计方案<a
+href="#fn12" class="footnote-ref" id="fnref12"
+role="doc-noteref"><sup>12</sup></a>对原有的代码改动很大，不如重新实现来得容易。</p>
+<p><strong>iPage</strong>算是我第一个自己发起的开源项目，不仅提供简明扼要的<strong>README</strong>，还增加了<strong>设计文档</strong><a
+href="#fn13" class="footnote-ref" id="fnref13"
+role="doc-noteref"><sup>13</sup></a>，<strong>测试用例</strong><a
+href="#fn14" class="footnote-ref" id="fnref14"
+role="doc-noteref"><sup>14</sup></a>，<strong>开源协议声明</strong><a
+href="#fn15" class="footnote-ref" id="fnref15"
+role="doc-noteref"><sup>15</sup></a>。</p>
+<p>最终<strong>iPage</strong>凭借突出的性能数据取代了<strong>store4j</strong>
+，但遗憾的是没能取代<strong>MySQL</strong>成为生产环境的存储实现。</p>
+<h2 id="housemd">HouseMD</h2>
+<p><strong>iPage</strong>虽未能善终，但来自github上其他程序员的关注，鼓励着我继续前行，才有了后来的<strong>HouseMD</strong><a
+href="#fn16" class="footnote-ref" id="fnref16"
+role="doc-noteref"><sup>16</sup></a>。</p>
+<p>与此前项目不同，<strong>HouseMD</strong>是个可运行的实用工具，为此<strong>README</strong>尤其强调<strong>安装</strong><a
+href="#fn17" class="footnote-ref" id="fnref17"
+role="doc-noteref"><sup>17</sup></a>和<strong>使用</strong>的指引。</p>
+<p>酒香也怕巷子深啊，刚发到<strong>Github</strong>上是无人问津的，但我自信这样工具能够也应该帮助更多的程序员。随后我试着为<strong>HouseMD</strong>创造一些曝光机会，先是去<strong>开源中国</strong>发布项目<a
+href="#fn18" class="footnote-ref" id="fnref18"
+role="doc-noteref"><sup>18</sup></a>，而后上<strong>Weibo</strong>寻求转发<a
+href="#fn19" class="footnote-ref" id="fnref19"
+role="doc-noteref"><sup>19</sup></a>。</p>
+<p>随着关注人多了，部分友人也有参与贡献之意，为了方便他们我又专门写了<strong>开发指南</strong><a
+href="#fn20" class="footnote-ref" id="fnref20"
+role="doc-noteref"><sup>20</sup></a>，涉及：</p>
+<ol type="1">
+<li>代码获取</li>
+<li>编译构建</li>
+<li>IDE 支持</li>
+<li>贡献建议</li>
+<li>参考示例</li>
+</ol>
+<p>当然这里肯定少不了<strong>测试用例</strong><a href="#fn21"
+class="footnote-ref" id="fnref21"
+role="doc-noteref"><sup>21</sup></a>，这次我采用<strong>Spec</strong>风格实现，让测试代码写的更像是文档。</p>
+<p>那时<strong>Scala</strong>还没有像<strong>Spark</strong>这样的杀手级应用，了解并掌握这门语言的国内程序员凤毛麟角，故真正有深度的贡献我最终没能等到。不过令我欣慰的是，一个名叫<strong>Grey
+anatomy</strong><a href="#fn22" class="footnote-ref" id="fnref22"
+role="doc-noteref"><sup>22</sup></a>项目出现了，它用 Java
+实现了<strong>HouseMD</strong>大部分功能，还额外增加了更多强大的能力。去年，在<strong>HouseMD</strong>发布三年后，我便在<strong>README</strong>中声明不再维护，并推荐<strong>Grey
+anatomy</strong>作为更好代替者，也是希望它能比<strong>HouseMD</strong>走的更远。</p>
+<p><strong>HouseMD</strong>之后，我只有零星一些实验性质的项目放在<strong>Github</strong>，活跃度不高。</p>
+<p>2014年的最后一天，我被领进了挖财在福地的办公区，与刚刚开完会的李治国寒暄了一句，就被领到工位上码代码了，代码了，码了…</p>
+<h2 id="config-annotation">config-annotation</h2>
+<p>我在参与到信贷系统研发之后，孵化出了新的开源项目<strong>config-annotation</strong><a
+href="#fn23" class="footnote-ref" id="fnref23"
+role="doc-noteref"><sup>23</sup></a>，关于它的由来与实现细节可见2015年6月我在华东区
+Scala 爱好者聚会上的分享<a href="#fn24" class="footnote-ref"
+id="fnref24" role="doc-noteref"><sup>24</sup></a>。</p>
+<p>为什么<strong>config-annotation</strong>值得拿来一说呢？尽管它的<strong>Star</strong>和
+<strong>Fork</strong>数量都不值得一提，但相比<strong>HouseMD</strong>，它让我对开源文化有了更进一步的理解。</p>
+<div class="alert" data-icon="">
+<p>公开你的源代码只是开源的第一步，真正能够爆发无限可能的是与世界上其他的程序员自由协作，相互贡献</p>
+</div>
+<p>这里我做了几件事：</p>
+<ol type="1">
+<li>向<strong>typesafe</strong>社区提交了<strong>Pull Request</strong><a
+href="#fn25" class="footnote-ref" id="fnref25"
+role="doc-noteref"><sup>25</sup></a>，并得到接纳；</li>
+<li>实现持续集成并发布到<strong>Maven Central Repo</strong><a
+href="#fn26" class="footnote-ref" id="fnref26"
+role="doc-noteref"><sup>26</sup></a>；</li>
+<li>在<strong>README</strong>中添加项目关键状态的<strong>Badge</strong><a
+href="#fn27" class="footnote-ref" id="fnref27"
+role="doc-noteref"><sup>27</sup></a>。</li>
+</ol>
+<p>这些都是为了让<strong>config-annotation</strong>真正融入到开源的世界里，使得任何一个网络能够触达的程序员都能很容易的了解它，使用它，改进它。最终我等来了第一个给我的<strong>Pull
+Request</strong><a href="#fn28" class="footnote-ref" id="fnref28"
+role="doc-noteref"><sup>28</sup></a>！</p>
+<h2 id="结尾">结尾</h2>
+<p>看到这里，
+我相信你会意识到，原来让你高山仰止的<strong>开源</strong>，其实和你每天的工作没有太大的区别。事实上，我发现不少优秀的程序员<strong>参与开源</strong>已经成为他们工作的一部分，而并未有明确的界限。</p>
+<p>回顾来看，参与开源的过程一直在潜移默化的改变我自己的工作方式，了解我的人应该都看在了眼里：</p>
+<ol type="1">
+<li>我喜欢用<strong>issue</strong>按排工作，跟踪进展，追溯变更；</li>
+<li>我喜欢用<strong>README</strong>帮助团队快速上手项目，降低沟通成本；</li>
+<li>我喜欢用<strong>Pull
+Request</strong>与同事协作开发，分享设计中心得，讨论Bug上的经验。</li>
+</ol>
+<p>言以至此，对于<strong>开源</strong>是什么，我由衷地希望看到这里的你能够与我感同身受，Let’s
+Do It!</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://github.com/DeNA/HandlerSocket-Plugin-for-MySQL"
+class="uri"
+target="_blank">https://github.com/DeNA/HandlerSocket-Plugin-for-MySQL</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="http://yoshinorimatsunobu.blogspot.com/2010/10/using-mysql-as-nosql-story-for.html"
+target="_blank">Using MySQL as a NoSQL- A story for exceeding 750,000qps
+on a commodity server</a><a href="#fnref2" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a href="https://github.com/zhongl/hs4j" class="uri"
+target="_blank">https://github.com/zhongl/hs4j</a><a href="#fnref3"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><a
+href="https://github.com/zhongl/hs4j/tree/master/contributes/hs4j-kit"
+class="uri"
+target="_blank">https://github.com/zhongl/hs4j/tree/master/contributes/hs4j-kit</a><a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a href="http://fnil.net/"
+target="_blank">killme2008</a>，后来我们有幸成了同事。<a href="#fnref5"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn6"><p><strong>TimeTunnel2</strong>是我在数据平台开发的消息中间件的第二代，应用场景和<strong>Kafka</strong>一样。可惜的是，在我完成上线的几个月后它才开源。感谢前同事，你还能在<a
+href="https://github.com/huolong/timetunnel" class="uri"
+target="_blank">https://github.com/huolong/timetunnel</a>看到它。<a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn7"><p>2007年淘宝在调研了业界消息中间件发现没有合适之后，自研的一套系统，它是当时整个淘宝架构体系中最核心的中间件。最初编写者是前淘宝中间件负责人，后任蘑菇街技术副总裁<strong>曾宪杰</strong>（花名华黎）。<a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn8"><p><strong>双11</strong>期间，淘宝的交易核心系统是必须保证足够的响应能力的，但像积分，红包，推荐等非业务核心系统几乎都要降级掉，那么连接核心与非核心系统的<strong>Notify</strong>将可能出现十几亿甚至上百亿消息的堆积。<a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p><a href="http://kafka.apache.org" class="uri"
+target="_blank">http://kafka.apache.org</a><a href="#fnref9"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p><a href="https://code.google.com/archive/p/store4j/"
+class="uri"
+target="_blank">https://code.google.com/archive/p/store4j/</a>，作者是前淘宝首席架构师，蘑菇街联合创始人<strong>岳旭强</strong>（花名黄裳）<a
+href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p><a href="https://github.com/zhongl/iPage" class="uri"
+target="_blank">https://github.com/zhongl/iPage</a><a href="#fnref11"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p><a href="https://github.com/zhongl/leveldb"
+target="_blank"><strong>LevelDB</strong></a>是同时期类似设计的一款优秀实现。它是<strong>Google</strong>出品，尽管有好事者把它
+Port 到了 Java 上，但在好奇心的驱使下，我并未直接拿来用，而是在实现
+<strong>iPage</strong>时借鉴一些它设计理念。<a href="#fnref12"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p><a
+href="https://github.com/zhongl/iPage/blob/master/doc/DESIGN.md"
+class="uri"
+target="_blank">https://github.com/zhongl/iPage/blob/master/doc/DESIGN.md</a><a
+href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p><a
+href="https://github.com/zhongl/iPage/blob/master/src/test/java/com/github/zhongl/api/IPageTest.java"
+class="uri"
+target="_blank">https://github.com/zhongl/iPage/blob/master/src/test/java/com/github/zhongl/api/IPageTest.java</a><a
+href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p><a
+href="https://github.com/zhongl/iPage/blob/master/LICENSE.txt"
+class="uri"
+target="_blank">https://github.com/zhongl/iPage/blob/master/LICENSE.txt</a><a
+href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p><a href="https://github.com/csug/housemd" class="uri"
+target="_blank">https://github.com/csug/housemd</a>。有心的朋友可能注意到了<strong>HouseMD</strong>项目是挂在在<strong>CSUG</strong>下面，而不是<strong>zhongl</strong>下，这里有个小插曲。那段时间，因为Scala我先后结识了<a
+href="https://afoo.me" target="_blank">扶墙老师</a>和 <a
+href="https://hongjiang.info"
+target="_blank"><strong>宏江</strong></a>，不久厚颜无耻在Github上创建了<strong>CSUG</strong>（China
+Scala User
+Group）这个（非官方）组织，为了不让主页空荡荡的，于是乎相继把自己的项目贡献到了<strong>CSUG</strong>下。<a
+href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p>为了保证方便安装，我与<a
+href="https://github.com/linux-china/jenv"
+target="_blank"><strong>jenv</strong></a>作者一拍即合，将其纳入到<strong>jenv</strong>的工具库中。<a
+href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p><a href="http://www.oschina.net/p/housemd" class="uri"
+target="_blank">http://www.oschina.net/p/housemd</a><a href="#fnref18"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn19"><p>5天之后<strong>Github</strong>上项目的被<strong>Star</strong>的数量超过<strong>100</strong>，成为<strong>Scala</strong>语言类项目<strong>Top1</strong>。
+此外，<strong>killme2008</strong>的一篇<a
+href="http://www.blogjava.net/killme2008/archive/2012/06/15/380822.html"
+target="_blank">利用HouseMD诊断Clojure</a>，也助力不少。<a
+href="#fnref19" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn20"><p><a
+href="https://github.com/CSUG/HouseMD/wiki/DevGuideCN" class="uri"
+target="_blank">https://github.com/CSUG/HouseMD/wiki/DevGuideCN</a><a
+href="#fnref20" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn21"><p><a
+href="https://github.com/CSUG/HouseMD/tree/master/src/test/scala/com/github/zhongl/housemd/command"
+class="uri"
+target="_blank">https://github.com/CSUG/HouseMD/tree/master/src/test/scala/com/github/zhongl/housemd/command</a><a
+href="#fnref21" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn22"><p><a
+href="https://github.com/oldmanpushcart/greys-anatomy" class="uri"
+target="_blank">https://github.com/oldmanpushcart/greys-anatomy</a><a
+href="#fnref22" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn23"><p><a href="https://github.com/hanabix/config-annotation"
+class="uri"
+target="_blank">https://github.com/hanabix/config-annotation</a><a
+href="#fnref23" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn24"><p><a
+href="https://github.com/CSUG/csug/blob/master/shanghai-2015-06-06/configuration_meets_scala_macro.pdf"
+class="uri"
+target="_blank">https://github.com/CSUG/csug/blob/master/shanghai-2015-06-06/configuration_meets_scala_macro.pdf</a><a
+href="#fnref24" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn25"><p><a
+href="https://github.com/typesafehub/config/pull/242" class="uri"
+target="_blank">https://github.com/typesafehub/config/pull/242</a><a
+href="#fnref25" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn26"><p><a
+href="https://central.sonatype.com/artifact/com.wacai/config-annotation_2.13"
+class="uri"
+target="_blank">https://central.sonatype.com/artifact/com.wacai/config-annotation_2.13</a><a
+href="#fnref26" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn27"><p><a href="https://github.com/hanabix/config-annotation"
+class="uri"
+target="_blank">https://github.com/hanabix/config-annotation</a><a
+href="#fnref27" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn28"><p><a
+href="https://github.com/hanabix/config-annotation/pull/4" class="uri"
+target="_blank">https://github.com/hanabix/config-annotation/pull/4</a><a
+href="#fnref28" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/essay"><span class="icons-outlined align-bottom">tag</span>杂文无序</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2025 zhongl.fun</p></footer></main></body></html>

@@ -1,0 +1,184 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>洋葱架构与类型泛化</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="看待事物的角度决定了我的认知。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-08-26">Aug 26, 2024</time><h1>洋葱架构与类型泛化</h1></header><div class="lead">
+<p>看待事物的角度决定了我的认知。</p>
+</div>
+<figure>
+<img src="0-787750d8696fb3a635812e24e8a1318a16d0f919.png"
+alt="名为洋葱的类型定义" />
+<figcaption aria-hidden="true">名为洋葱的类型定义</figcaption>
+</figure>
+<p>接上回，既然要用 Scala
+进行重写，那必须充分利用它在类型系统上的优势啊。</p>
+<p>这一切还得从领域建模入手。回顾一下我的需求，“画一条速心比的曲线”，我愿将其拆解如下三个问题：</p>
+<ul>
+<li>何时画？</li>
+<li>何地画？</li>
+<li>如何画？</li>
+</ul>
+<h2 id="何时">何时</h2>
+<p>在进行原型实现中，我就发现 <a href="https://connect.garmin.cn"
+target="_blank">connect.garmin.cn</a>
+采用的是前端渲染，即页面可视内容均由 Javascript
+动态生成。这就意味着，画的时机大概要放在页面内容生成完成之后。为了能够感知页面内容的变化，以判断合适的时机，之前的实现用到了
+<code>MutationObserver</code> <a href="#fn1" class="footnote-ref"
+id="fnref1" role="doc-noteref"><sup>1</sup></a>
+，这是典型观察者模式的应用场景 <a href="#fn2" class="footnote-ref"
+id="fnref2" role="doc-noteref"><sup>2</sup></a>。</p>
+<p>自然地，这个领域部分的模型如下：</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> core</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Observe  <span class="op">=</span> HTMLElement <span class="op">=&gt;</span> <span class="bu">Unit</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="ex">Callback</span> <span class="op">=</span> Mutation <span class="op">=&gt;</span> <span class="bu">Unit</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Mutation <span class="op">=</span> <span class="op">(</span><span class="ex">URL</span><span class="op">,</span> <span class="bu">Seq</span><span class="op">[</span>HTMLElement<span class="op">])</span></span></code></pre></div>
+<div class="alert" data-icon="">
+<p>以上代码看着有点懵的，稍作解释如下，否则可略过。<code>Observe</code>
+是一个特定函数类型的别名，<code>=&gt;</code>
+左边的是参数类型，右边的是返回值类型。 <code>Unit</code>
+表示无类型，相当于很多语言里的 <code>void</code>。 <code>Mutation</code>
+则是一个二元组类型的别名。</p>
+</div>
+<p>具体来讲，解答何时，就是解答：</p>
+<ul>
+<li>观察谁的变化？</li>
+<li>如何处理变化？</li>
+<li>变化都有什么？</li>
+</ul>
+<h2 id="何地">何地</h2>
+<p>回答这个问题最容易，肯定是 <strong>注入</strong> 到某个
+<code>HTMLElement</code> 里。</p>
+<figure>
+<img src="mpb-activities.png" alt="活动页面里注入的速心比曲线" />
+<figcaption aria-hidden="true">活动页面里注入的速心比曲线</figcaption>
+</figure>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Injection<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> <span class="op">(</span>HTMLElement<span class="op">,</span> A<span class="op">)</span></span></code></pre></div>
+<p>其中的 <code>A</code> 是什么，我下面讲。</p>
+<h2 id="如何">如何</h2>
+<p>这个问题是整个领域的关键，但并不代表它的建模会多复杂。不信，你看：</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Inject      <span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> Injection<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> <span class="bu">Unit</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Performance <span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> A <span class="op">=&gt;</span> MeterPerBeat</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> MeterPerBeat    <span class="op">=</span> <span class="ex">Double</span></span></code></pre></div>
+<p>这里的 <code>A</code> ，也是上一节提到的，代表画图所需要的
+<strong>数据</strong>。<code>Inject</code> 意味着，将数据 <code>A</code>
+变成曲线，并注入到一个 <code>HTMLElement</code>
+内。有没有觉得哪里不对劲？</p>
+<p>为什么在 <strong>何时</strong>
+的问题上，我可以明确定义函数的输入输出类型，而到了 <strong>如何</strong>
+却用 <code>A</code> 给 <strong>泛化</strong>
+掉了？这抽象的颗粒度明显不一致啊。</p>
+<p>不急，我从两个角度来解释。首先，下面不是还有 <code>Performance</code>
+和 <code>MeterPerBeat</code> 吗？ 前者表示，速心比（英译
+MeterPerBeat）是从 <code>A</code>
+计算得到；后者，则交代了速心比的数值类型 <a href="#fn3"
+class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>。后者看上去是多此一举，但在语义上却是点睛之笔。此时，在概念上，模型对领域的体现是充分的。</p>
+<p>其次，<code>A</code> 是刻意留白的 <a href="#fn4" class="footnote-ref"
+id="fnref4"
+role="doc-noteref"><sup>4</sup></a>。此前实现的经验中，我清楚的认识到
+Garmin
+提供的数据是非常丰富的，如何取舍，我自己也没拿定，后续变化的可能性极大。但无论怎样的变化，<code>Performance</code>
+的定义依旧会把焦点拉回到 <strong>速心比</strong> 上。</p>
+<h2 id="解与构">解与构</h2>
+<p>上面的模型定义有没有太过抽象，真的能够指导代码具体实现吗？</p>
+<p>不能，确实不能。因为，这样的模型从来不是为了指导代码的具体实现的！它是用来指导
+<strong>代码是如何拆分，而后又如何构成</strong> 的。</p>
+<p>软件开发过程中，最难缠的永远不是代码如何实现，而是如何拆分。系统的复杂度越高，拆分的难度越大。而拆分的方案又直接影响到实际开发效率，从分工协同，到集成联调，再到维护扩展。</p>
+<p>大道理都对，仍旧空口无凭。好，我们不妨继续看以上模型是怎么体现代码的
+<strong>解与构</strong>。</p>
+<figure>
+<img src="b90bcf13d8b8583c1e8587941a64170611b3e7fa.png"
+alt="接口与组件" />
+<figcaption aria-hidden="true">接口与组件</figcaption>
+</figure>
+<p>以上 <code>Observe</code> 、<code>Callback</code>
+、<code>Inject</code> 可以视为接口， 分别被 <code>dom</code>
+、<code>garmin</code> 、<code>plotly</code> 三个模块实现。其中
+<code>dom</code> 需要依赖 <code>Callback</code>
+完成变化发生后的回调触发；<code>garmin</code> 需要依赖
+<code>Inject</code> 实现数据绘图后的注入。</p>
+<p>相应的代码则大致如下：</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> dom</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>given <span class="fu">observe</span><span class="op">(</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  using <span class="ex">Callback</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="op">):</span> Observe <span class="op">=</span> <span class="op">???</span></span></code></pre></div>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> garmin</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>given <span class="fu">callback</span><span class="op">(</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  using Inject<span class="op">[</span><span class="ex">Data</span><span class="op">]</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a><span class="op">):</span> <span class="ex">Callback</span> <span class="op">=</span> <span class="op">???</span></span></code></pre></div>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">package</span> plotly</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>given injectData<span class="op">:</span> Inject<span class="op">[</span><span class="ex">Data</span><span class="op">]</span> <span class="op">=</span> <span class="op">???</span></span></code></pre></div>
+<div class="alert" data-icon="">
+<p><code>given</code> 和 <code>using</code> ，是 Scala 3
+提供的新的语法关键字，作用相当于声明 <em>依赖注入</em>
+。值得注意的是，这里的依赖注入是编译期完成的，可理解为是一种语法糖。</p>
+</div>
+<p>而最后集成代码的则是：</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> core<span class="op">.</span>Observe</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> dom<span class="op">.</span>given</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> garmin<span class="op">.</span>given</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> ploty<span class="op">.</span>given</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">main</span><span class="op">(</span>args<span class="op">:</span> <span class="ex">String</span><span class="op">*):</span> <span class="bu">Unit</span> <span class="op">=</span> </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  summon<span class="op">[</span>Observe<span class="op">](???)</span></span></code></pre></div>
+<p>在入口函数 <code>main</code> 中，导入各个组件的 <code>given</code>
+，召唤并应用 <code>Observe</code> 函数即可。</p>
+<p>到此为止……了吗？若只是为了实现功能，先前的原型就足够了。用 Scala
+费这番周折只是一个良好的开端，试想有一天，</p>
+<ul>
+<li>图光画不够，还需要支持动态交互，这时 plotly 不够用，要换掉怎么办 <a
+href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a>？</li>
+<li>新买了一块 COROS（高驰）的跑表，新站点新数据怎么办 <a href="#fn6"
+class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>？</li>
+</ul>
+<p>至于，洋葱架构与类型泛化，请参见脚注吧 <a href="#fn7"
+class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a> <a
+href="#fn8" class="footnote-ref" id="fnref8"
+role="doc-noteref"><sup>8</sup></a>。</p>
+<p>以上个人观点，不一定对，也可能错的离谱，兼听则明，待续回见。</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver"
+class="uri"
+target="_blank">https://developer.mozilla.org/en-US/docs/Web/API/MutationObserver</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://en.wikipedia.org/wiki/Observer_pattern"
+class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Observer_pattern</a><a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>更多速心比的话题，请移步 <a
+href="./post/meters-per-beat/">为什么我开始看重跑步时的心率</a> 。<a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn4"><p>“留白”在这里的表达，可能过于含蓄。其本意就是，给后续代码变化预留扩展点。<a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a href="https://plotly.com/javascript/" class="uri"
+target="_blank">https://plotly.com/javascript/</a><a href="#fnref5"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a href="https://cn.coros.com/" class="uri"
+target="_blank">https://cn.coros.com/</a><a href="#fnref6"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a
+href="https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/"
+class="uri"
+target="_blank">https://jeffreypalermo.com/2008/07/the-onion-architecture-part-1/</a><a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p><a
+href="https://en.wikipedia.org/wiki/Generic_programming" class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Generic_programming</a><a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/plog"><span class="icons-outlined align-bottom">tag</span>码志</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2025 zhongl.fun</p></footer></main></body></html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>用类型看透 Y Combinator</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="当 f(x) = x ，称此时的 x 为函数 f 的固定点（Fixed Point）。如果 x 是一个函数呢？" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-11-08">Nov 8, 2024</time><h1>用类型看透 Y Combinator</h1></header><div class="lead">
+<p>当 <span
+class="math inline"><em>f</em>(<em>x</em>) = <em>x</em></span>
+，称此时的 <span class="math inline"><em>x</em></span> 为函数 <span
+class="math inline"><em>f</em></span> 的固定点（Fixed Point）。如果
+<span class="math inline"><em>x</em></span> 是一个函数呢？</p>
+</div>
+<figure>
+<img src="0-b36ffbbc96d61d8e3c4c022e1014b3781f57368a.png"
+alt="Fixed Point Combinator" />
+<figcaption aria-hidden="true">Fixed Point Combinator</figcaption>
+</figure>
+<p>“不就是 Y Combinator 嘛， 我知道” <a href="#fn1" class="footnote-ref"
+id="fnref1" role="doc-noteref"><sup>1</sup></a>。</p>
+<p>嗯，介绍它的文章确实不少，但容易看懂的应该不多。这次，我另辟蹊径，尝试从类型的视角来剖析
+Y Combinator ，看能否让人豁然开朗。</p>
+<p>回顾一下 Y Combinator 的无类型 Lambda
+演算表达式，如下（此后不再有更多公式）：</p>
+<figure>
+<img src="3ab02b08bce098422460cb7ee64a0460b502ed71.png"
+alt="Y Combinator" />
+<figcaption aria-hidden="true">Y Combinator</figcaption>
+</figure>
+<p>不卖关子，直接上翻译后的 Scala 代码：</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> F<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> A <span class="op">=&gt;</span> A</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> X<span class="op">[</span>A<span class="op">]</span> <span class="kw">extends</span> <span class="op">(</span>X<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> F<span class="op">[</span>A<span class="op">])</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Y<span class="op">[</span>A<span class="op">](</span>f<span class="op">:</span> F<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> F<span class="op">[</span>A<span class="op">]):</span> F<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">val</span> g<span class="op">:</span> X<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> x <span class="op">=&gt;</span> a <span class="op">=&gt;</span> <span class="fu">f</span><span class="op">(</span><span class="fu">x</span><span class="op">(</span>x<span class="op">))(</span>a<span class="op">)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">g</span><span class="op">(</span>g<span class="op">)</span></span></code></pre></div>
+<p>秒懂的朋友，可略过后文了，若感兴趣验证一下代码的请参阅脚注 <a
+href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>。留下的朋友，请继续跟我来。</p>
+<h2 id="破除阅读障碍">破除阅读障碍</h2>
+<p>看不懂 Y Combinator 的原因，大概率是因为看不懂（无类型的） Lambda
+演算语法。为方便后文理解，以下语法翻译小抄请记牢：</p>
+<ul>
+<li><code>λx.x</code>，即 <code>x =&gt; x</code>，定义匿名函数;</li>
+<li><code>f x</code>，即 <code>f(x)</code>，应用函数；</li>
+</ul>
+<p>那么，Y Combinator 若翻译成 Javascript 就是 <a href="#fn3"
+class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>：</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> Y <span class="op">=</span> f <span class="kw">=&gt;</span> (x <span class="kw">=&gt;</span> <span class="fu">f</span>(<span class="fu">x</span>(x)))(x <span class="kw">=&gt;</span> <span class="fu">f</span>(<span class="fu">x</span>(x)))</span></code></pre></div>
+<h2 id="自应用函数-sa">自应用函数 <a href="#fn4" class="footnote-ref"
+id="fnref4" role="doc-noteref"><sup>4</sup></a></h2>
+<p><code>Y</code> 是什么类型，很难判断。不妨从 <code>f</code> 和
+<code>x</code> 这两个相对简单的函数入手先。假定，<code>f</code> 的类型为
+<code>F</code>，参数和返回值类型不详，暂且用 <code>Any</code> 表示：</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">type</span> F <span class="op">=</span> <span class="ex">Any</span> <span class="op">=&gt;</span> <span class="ex">Any</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co">// defined alias type F = Any =&gt; Any</span></span></code></pre></div>
+<p><code>x</code> 的类型 <code>X</code> 就有点让人挠头了，它
+<strong>自己 依赖 自身 作为参数</strong>。硬着头皮可以这么声明：</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">type</span> X <span class="op">=</span> X <span class="op">=&gt;</span> <span class="ex">Any</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="op">--</span> <span class="op">[</span>E140<span class="op">]</span> Cyclic <span class="ex">Error</span><span class="op">:</span> <span class="op">------------</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> <span class="op">|</span><span class="kw">type</span> X <span class="op">=</span> X <span class="op">=&gt;</span> <span class="ex">Any</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>     <span class="op">^</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>illegal cyclic <span class="kw">type</span> reference<span class="op">:</span> </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>  alias X <span class="op">=&gt;</span> <span class="ex">Any</span> of <span class="kw">type</span> X refers</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">|</span>  back to the <span class="kw">type</span> itself</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="dv">1</span> error found</span></code></pre></div>
+<p>意思是这么个意思，可惜编译器不接受这样的类型别名（alias）声明。编译器可接受的等价形式是这样的：</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">trait</span> X <span class="kw">extends</span> <span class="op">(</span>X <span class="op">=&gt;</span> <span class="ex">Any</span><span class="op">)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">// defined trait X</span></span></code></pre></div>
+<p>由此，我们可以尝试将 Y Combinator 翻译成 Scala，来看看 <code>Y</code>
+的类型：</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">def</span> <span class="fu">Y</span><span class="op">(</span>f<span class="op">:</span> F<span class="op">)</span> <span class="op">=</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="kw">val</span> g<span class="op">:</span> X <span class="op">=</span> x <span class="op">=&gt;</span> <span class="fu">f</span><span class="op">(</span><span class="fu">x</span><span class="op">(</span>x<span class="op">))</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="fu">g</span><span class="op">(</span>g<span class="op">)</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">Y</span><span class="op">(</span>f<span class="op">:</span> F<span class="op">):</span> <span class="ex">Any</span></span></code></pre></div>
+<p>其中的 <code>g</code> 相当于给后面 <code>X</code>
+的表达式起了个别名，这样代码看着更简洁。最后一行，编译器已经推断出
+<code>Y</code> 的完整类型表达了。</p>
+<p>注意，根据 <code>f(x(x))</code>，可知 <code>x</code> 的返回值是要作为
+<code>f</code> 的参数的，这二者的类型必然是 <strong>一致</strong>
+的。显然，<code>Any</code>
+是不足以采信的。因此，我需要将这个类型参数化，以做到严谨的表达。</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">type</span> F<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> A <span class="op">=&gt;</span> A</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> <span class="kw">trait</span> X<span class="op">[</span>A<span class="op">]</span> <span class="kw">extends</span> <span class="op">(</span>X<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> A<span class="op">)</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> <span class="kw">def</span> Y<span class="op">[</span>A<span class="op">](</span>f<span class="op">:</span> F<span class="op">[</span>A<span class="op">])</span> <span class="op">=</span> </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="kw">val</span> g<span class="op">:</span> X<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> x <span class="op">=&gt;</span> <span class="fu">f</span><span class="op">(</span><span class="fu">x</span><span class="op">(</span>x<span class="op">))</span> </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="fu">g</span><span class="op">(</span>g<span class="op">)</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co">// defined alias type F[A] = A =&gt; A</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co">// defined trait X</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Y<span class="op">[</span>A<span class="op">](</span>f<span class="op">:</span> F<span class="op">[</span>A<span class="op">]):</span> A</span></code></pre></div>
+<p>至此，是不是有点感觉了？Y Combinator
+的奥义在于，<strong>对「自应用函数」类型 <code>X</code>
+的自应用</strong>。这样做的价值，从编程的角度来看，就是实现了递归（循环）。</p>
+<p>没想通的话，我们就以阶乘函数为例验证一下：</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">def</span> fact<span class="op">:</span> <span class="bu">Int</span> <span class="op">=&gt;</span> <span class="bu">Int</span> <span class="op">=</span> </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="cf">case</span> <span class="dv">1</span> <span class="op">=&gt;</span> <span class="dv">1</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="cf">case</span> n <span class="op">=&gt;</span> n <span class="op">*</span> <span class="fu">fact</span><span class="op">(</span>n <span class="op">-</span> <span class="dv">1</span><span class="op">)</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fact<span class="op">:</span> <span class="bu">Int</span> <span class="op">=&gt;</span> <span class="bu">Int</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">fact</span><span class="op">(</span><span class="dv">4</span><span class="op">)</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res1<span class="op">:</span> <span class="bu">Int</span> <span class="op">=</span> <span class="dv">24</span></span></code></pre></div>
+<p>将其改写为对 <code>Y</code> 的应用：</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> fact <span class="op">=</span> Y<span class="op">[</span><span class="bu">Int</span> <span class="op">=&gt;</span> <span class="bu">Int</span><span class="op">]:</span> f <span class="op">=&gt;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="dv">1</span> <span class="op">=&gt;</span> <span class="dv">1</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> n <span class="op">=&gt;</span> n <span class="op">*</span> <span class="fu">f</span><span class="op">(</span>n <span class="op">-</span> <span class="dv">1</span><span class="op">)</span></span></code></pre></div>
+<p>二者区别在于，前者是直接引用自身，后者的参数是自身的代理。</p>
+<blockquote>
+<p>I’m my own granddad…</p>
+</blockquote>
+<p><cite>The Bartender, <strong><em>Predestination (2014)</em></strong>
+<a href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a></cite></p>
+<p>不幸的是，这么改写编译器是扛不住的：</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">val</span> fact <span class="op">=</span> Y<span class="op">[</span><span class="bu">Int</span> <span class="op">=&gt;</span> <span class="bu">Int</span><span class="op">]:</span> f <span class="op">=&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="cf">case</span> <span class="dv">1</span> <span class="op">=&gt;</span> <span class="dv">1</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="cf">case</span> n <span class="op">=&gt;</span> n <span class="op">*</span> <span class="fu">f</span><span class="op">(</span>n <span class="op">-</span> <span class="dv">1</span><span class="op">)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>java<span class="op">.</span>lang<span class="op">.</span><span class="ex">StackOverflowError</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">...</span></span></code></pre></div>
+<h2 id="惰性求值">惰性求值</h2>
+<p>为什么会栈溢出呢？这个问题确实不好解释，不如从解决方案中，我们去逆向理解。</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">class</span> Lazy<span class="op">[</span>A<span class="op">](</span>f<span class="op">:</span> <span class="op">()</span> <span class="op">=&gt;</span> A<span class="op">):</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="kw">def</span> eval<span class="op">:</span> A <span class="op">=</span> <span class="fu">f</span><span class="op">()</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="co">// defined class Lazy</span></span></code></pre></div>
+<p>首先，需要引入 <code>Lazy</code> 来模拟 <strong>惰性求值</strong> <a
+href="#fn6" class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>。其次，对应地调整 <code>F</code>
+<code>X</code> <code>Y</code> ：</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">type</span> F<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> Lazy<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> A</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> <span class="kw">trait</span> X<span class="op">[</span>A<span class="op">]</span> <span class="kw">extends</span> <span class="op">(</span>X<span class="op">[</span>A<span class="op">]</span> <span class="op">=&gt;</span> Lazy<span class="op">[</span>A<span class="op">])</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> <span class="kw">def</span> Y<span class="op">[</span>A<span class="op">](</span>f<span class="op">:</span> F<span class="op">[</span>A<span class="op">])</span> <span class="op">=</span> </span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="kw">val</span> g<span class="op">:</span> X<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> x <span class="op">=&gt;</span> Lazy<span class="op">:</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>     <span class="op">()</span> <span class="op">=&gt;</span> <span class="fu">f</span><span class="op">(</span><span class="fu">x</span><span class="op">(</span>x<span class="op">))</span></span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="fu">g</span><span class="op">(</span>g<span class="op">)</span></span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a><span class="co">// defined alias type F[A] = Lazy[A] =&gt; A</span></span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a><span class="co">// defined trait X</span></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> Y<span class="op">[</span>A<span class="op">](</span>f<span class="op">:</span> F<span class="op">[</span>A<span class="op">]):</span> Lazy<span class="op">[</span>A<span class="op">]</span></span></code></pre></div>
+<p>最后，调整改写的 <code>fact</code>，回车！</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">val</span> fact <span class="op">=</span> Y<span class="op">[</span><span class="bu">Int</span> <span class="op">=&gt;</span> <span class="bu">Int</span><span class="op">]:</span> f <span class="op">=&gt;</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="cf">case</span> <span class="dv">1</span> <span class="op">=&gt;</span> <span class="dv">1</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span>   <span class="cf">case</span> n <span class="op">=&gt;</span> n <span class="op">*</span> f<span class="op">.</span><span class="fu">eval</span><span class="op">(</span>n <span class="op">-</span> <span class="dv">1</span><span class="op">)</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>     <span class="op">|</span> </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> fact<span class="op">:</span> Lazy<span class="op">[</span><span class="bu">Int</span> <span class="op">=&gt;</span> <span class="bu">Int</span><span class="op">]</span> <span class="op">=</span> Lazy@<span class="dv">1</span>c23e369  </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> fact<span class="op">.</span><span class="fu">eval</span><span class="op">(</span><span class="dv">4</span><span class="op">)</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res2<span class="op">:</span> <span class="bu">Int</span> <span class="op">=</span> <span class="dv">24</span></span></code></pre></div>
+<p>从结果来看，栈溢出是没有了。其中的细节就在 <code>g</code> ：</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co">// stack overflow</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> g<span class="op">:</span> X<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> x <span class="op">=&gt;</span> <span class="fu">f</span><span class="op">(</span><span class="fu">x</span><span class="op">(</span>x<span class="op">))</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co">// ok</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> g<span class="op">:</span> X<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> x <span class="op">=&gt;</span> Lazy<span class="op">:</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">()</span> <span class="op">=&gt;</span> <span class="fu">f</span><span class="op">(</span><span class="fu">x</span><span class="op">(</span>x<span class="op">))</span></span></code></pre></div>
+<p>主流编程语言几乎都是 <strong>严格求值</strong> 的，这意味着
+<code>x(x)</code> 会在 <strong>自应用</strong> 中无限循环直到栈溢出。而
+<code>Lazy</code> 类型的引入，就让 <strong>自应用</strong>
+可按需（延迟）调用。这个按需，就体现在 <code>f.eval(n - 1)</code>。</p>
+<p>眼尖的你，可能已经发现了，这一步步剖析得到的代码和最初给出的答案不一样啊。嗯，是不一样，但效果是一样的，不信就自己去试试吧。</p>
+<h2 id="写在最后">写在最后</h2>
+<p>由此可见，Y Combinator 的实质是，在
+<strong>向未来借一个「代理」</strong> 啊。</p>
+<p>不懂，没关系。墙裂推荐这部电影，看过之后再来体会 Y
+Combinator，必定更生动。</p>
+<figure>
+<img src="8a6de45ff1ff8d8ce9eb3e3364fe679b418c4110.jpg"
+alt="图片来自" />
+<figcaption aria-hidden="true">图片来自<a href="#fn7"
+class="footnote-ref" id="fnref7"
+role="doc-noteref"><sup>7</sup></a></figcaption>
+</figure>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://en.wikipedia.org/wiki/Fixed-point_combinator" class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Fixed-point_combinator</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://scastie.scala-lang.org/zhongl/inj6N2dpQ6eSB5xSAKwVlQ/28"
+class="uri"
+target="_blank">https://scastie.scala-lang.org/zhongl/inj6N2dpQ6eSB5xSAKwVlQ/28</a><a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a
+href="https://juejin.cn/post/7043748080109223944#heading-16" class="uri"
+target="_blank">https://juejin.cn/post/7043748080109223944#heading-16</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>出自我的个人命名，可能不严谨，懂我意思就行。<a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a
+href="https://www.imdb.com/title/tt2397535/quotes/?item=qt4296558&amp;ref_=ext_shr_lnk"
+class="uri"
+target="_blank">https://www.imdb.com/title/tt2397535/quotes/?item=qt4296558&amp;ref_=ext_shr_lnk</a><a
+href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a
+href="https://en.wikipedia.org/wiki/Lazy_evaluation#Simulating_laziness_in_eager_languages"
+class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Lazy_evaluation#Simulating_laziness_in_eager_languages</a><a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a
+href="https://www.imdb.com/title/tt2397535/mediaviewer/rm2485654785/?ref_=tt_ov_i"
+class="uri"
+target="_blank">https://www.imdb.com/title/tt2397535/mediaviewer/rm2485654785/?ref_=tt_ov_i</a><a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/plog"><span class="icons-outlined align-bottom">tag</span>码志</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2025 zhongl.fun</p></footer></main></body></html>

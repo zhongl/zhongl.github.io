@@ -1,0 +1,187 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>当动态语言有了类型会是怎样的编程体验</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="类型一直存在于我脑子里，只是有些语言需要明说，另一些语言则假装和我很有默契。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-08-18">Aug 18, 2024</time><h1>当动态语言有了类型会是怎样的编程体验</h1></header><div class="lead">
+<p>类型一直存在于我脑子里，只是有些语言需要明说，另一些语言则假装和我很有默契。</p>
+</div>
+<figure>
+<img src="0-6f87eb91b77e56995786ae42ad74b3a63a6d28a4.jpg"
+alt="图片来自 JavaScript vs TypeScript : Key Comparison " />
+<figcaption aria-hidden="true">图片来自 JavaScript vs TypeScript : Key
+Comparison <a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></figcaption>
+</figure>
+<p>接上回，在用 JavaScript 快糙猛的蹚出一个原型后，我决定用 Scala.js
+来重写，为得是让后续的迭代效率更高。但事情远没有那么简单，眼前出现是个精英怪，挡在主线情节上，绕不开，必须干。</p>
+<p>尽管 Scala.js 让我拥有编写 Scala 的愉悦体验，但它本质是个将 Scala
+代码编译成 JavaScript 代码的编译器后端扩展。也就是说， Scala
+编写的部分，需要依赖的标准库和三方库，它们大多都是 JavaScript
+编写的。同样，运行在 JVM 上 Scala 代码，依赖的是 Java
+编写的标准库和三方库，必须考虑不同语言之间的互操作性（Interoperability）。</p>
+<div class="alert" data-icon="">
+<p>Scala.js 的作者是 Sébastien Doeraene <a href="#fn2"
+class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>，我发现国内某大号将其作者“颁发”给了
+Li Haoyi <a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>，尽管他让 Scala.js
+更为人所知，但他确实不是，我在此借机辅以澄清。</p>
+</div>
+<p>相比较从宽容的语言调用严格的语言，如 Javascript 调 Java <a
+href="#fn4" class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a>，反过来从 Scala 调 JavaScript
+就要麻烦一些。好在，这样精英怪不难打，就是费手。</p>
+<p>往细了说，就是要为所依赖的 JavaScript 库 API 做类型适配性定义 <a
+href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a>。类似的事情，TypeScript
+也有做，这里借用官方文档的例子来说明 <a href="#fn6" class="footnote-ref"
+id="fnref6" role="doc-noteref"><sup>6</sup></a>：</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode js"><code class="sourceCode javascript"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// JavaScript</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> user <span class="op">=</span> {</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="dt">name</span><span class="op">:</span> <span class="st">&quot;Hayes&quot;</span><span class="op">,</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="dt">id</span><span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// TypeScript</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">interface</span> User {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  name<span class="op">:</span> <span class="dt">string</span><span class="op">;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  id<span class="op">:</span> <span class="dt">number</span><span class="op">;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="kw">const</span> user<span class="op">:</span> User <span class="op">=</span> {</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  name<span class="op">:</span> <span class="st">&quot;Hayes&quot;</span><span class="op">,</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  id<span class="op">:</span> <span class="dv">0</span><span class="op">,</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>}<span class="op">;</span></span></code></pre></div>
+<p>如上适配工作，可能是细碎且一眼望不到头的，我也不想把精力放在这上面。开源社区里已经有一些前人的积累了
+<a href="#fn7" class="footnote-ref" id="fnref7"
+role="doc-noteref"><sup>7</sup></a>，遗憾的是这些适配有可能版本落后，又或是不够完整，用起来会膈应。</p>
+<div class="alert" data-icon="">
+<p>上回关于语言的选择，有朋友在票圈认真评论道，“ AI coding 时代选 rust
+”。按下语言选择不表，这类适配的辅助性工作，会不会才是 AI Copilot
+该干的呢？</p>
+</div>
+<p>解决方案是有的，这要感谢 TypeScript
+。不得不感慨，一个语言有多牛逼，还得看背后金主爸爸多有钱 <a href="#fn8"
+class="footnote-ref" id="fnref8"
+role="doc-noteref"><sup>8</sup></a>。我遇到的这个麻烦，早早地就困扰着
+TypeScript 程序员 Boris ，为此 DefinitelyTyped 诞生了 <a href="#fn9"
+class="footnote-ref" id="fnref9" role="doc-noteref"><sup>9</sup></a>。
+而后，相似故事又发生在 Scala 程序员 Oyvindberg 身上，才有了
+ScalablyTyped <a href="#fn10" class="footnote-ref" id="fnref10"
+role="doc-noteref"><sup>10</sup></a>。它能根据 DefinitelyTyped 中
+TypeScript 类型定义，自动生成对应 Scala
+类型定义。理论上，它就是个编程手柄，一键连招啊！</p>
+<p>好是好，可也是有 <strong>隐形的认知成本</strong>
+的，深究其中还蛮有趣的，我挑一个说说。TypeScript 中有个工具类型
+<code>Partial&lt;Type&gt;</code> <a href="#fn11" class="footnote-ref"
+id="fnref11"
+role="doc-noteref"><sup>11</sup></a>，典型的应用场景是，用来定义
+<strong>配置选项</strong> 的对象类型，我试着用下面 <code>Config</code>
+的代码来解释一下：</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode ts"><code class="sourceCode typescript"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// TypeScript</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">interface</span> Config {</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  editable<span class="op">:</span> <span class="dt">boolean</span><span class="op">;</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  showTips<span class="op">:</span> <span class="dt">boolean</span><span class="op">;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">...</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="kw">function</span> <span class="fu">input</span>(conf<span class="op">:</span> <span class="bu">Partial</span><span class="op">&lt;</span>Config<span class="op">&gt;</span>)<span class="op">:</span> Input </span></code></pre></div>
+<p><code>Partial&lt;Config&gt;</code> 意思是，任何具有部分（也可以没有）
+<code>Config</code>
+属性的对象都满足这个类型定义。通俗点讲，在调用<code>input({...})</code>时，<code>Config</code>
+所有的属性都是可选的。像这样的情况在 JavaScript
+里很常见，但是不是真的都可选，没有这样的类型定义，编译器也是没法帮我们预防隐患，只能靠运行时捉虫了。</p>
+<p>当只看了某个 JavaScript 三方库的 API 文档时，我是不知道对应的
+TypeScript 定义会是怎样，更是无法预料 ScalablyTyped 又是如何转译成 Scala
+的。导致在 VSCode 里查找对应的 API
+方法，我那个懵圈捉急啊。真是十指不沾阳春水，看着做好的饭菜我都不知道怎么下嘴。</p>
+<p>ScalablyTyped 的转译结果，我稍作精简如下，</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Scala</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> Config<span class="op">:</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  editable<span class="op">:</span> <span class="ex">Boolean</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  showTips<span class="op">:</span> <span class="ex">Boolean</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">...</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> PartialConfig<span class="op">:</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  editable<span class="op">:</span> UndefOr<span class="op">[</span><span class="ex">Boolean</span><span class="op">]</span> <span class="op">=</span> undefined </span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  showTips<span class="op">:</span> UndefOr<span class="op">[</span><span class="ex">Boolean</span><span class="op">]</span> <span class="op">=</span> undefined </span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">???</span>  </span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">input</span><span class="op">(</span>conf<span class="op">:</span> PartialConfig<span class="op">):</span> Input </span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> UndefOr<span class="op">[</span>A<span class="op">]</span>     <span class="op">=</span> A <span class="op">|</span> <span class="bu">Unit</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> undefined<span class="op">:</span> <span class="bu">Unit</span> <span class="op">=</span> <span class="op">()</span></span></code></pre></div>
+<p>刚看上面，我是不能接受的，要我来手写会是，</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Scala</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> Config<span class="op">:</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  editable<span class="op">:</span> UndefOr<span class="op">[</span><span class="ex">Boolean</span><span class="op">]</span> <span class="op">=</span> undefined </span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  showTips<span class="op">:</span> UndefOr<span class="op">[</span><span class="ex">Boolean</span><span class="op">]</span> <span class="op">=</span> undefined </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">???</span>  </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">input</span><span class="op">(</span>conf<span class="op">:</span> Config<span class="op">):</span> Input </span></code></pre></div>
+<p>对 <code>Partial&lt;Config&gt;</code>
+的直译，显得画蛇添足，甚至违反直觉。转念细想，从 ScalablyTyped
+角度看，其实是合理的。因为，它目的就是将 TypeScript 的翻译语义一致的
+Scala， 而不关心 TypeScript 是不是从 JavaScript
+那儿来的。那么，多此一举的会是 TypeScript
+定义的锅吗？不好说，我更倾向把锅甩给 JavaScript ，谁叫它跟我玩默契。</p>
+<p>以上窥见，是认知成本大，还是启用一门新语言成本大，得分情况。作为自己的项目我依然选择
+Scala，但要是考虑到这个项目未来给其他人接手，嗯，不好说。</p>
+<p>待续回见。</p>
+<p>PS：说回本文的标题，要回答它吧，可能 TypeScript
+程序员更有发言权，我这就是扔块砖吧。</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://www.tatvasoft.com/blog/javascript-vs-typescript/"
+class="uri"
+target="_blank">https://www.tatvasoft.com/blog/javascript-vs-typescript/</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a href="https://lampwww.epfl.ch/~doeraene/" class="uri"
+target="_blank">https://lampwww.epfl.ch/~doeraene/</a><a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a href="https://www.lihaoyi.com/resume.html"
+class="uri" target="_blank">https://www.lihaoyi.com/resume.html</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><a
+href="https://www.graalvm.org/latest/reference-manual/js/JavaInteroperability/#access-java-from-javascript"
+class="uri"
+target="_blank">https://www.graalvm.org/latest/reference-manual/js/JavaInteroperability/#access-java-from-javascript</a><a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a
+href="https://www.scala-js.org/doc/interoperability/facade-types.html"
+class="uri"
+target="_blank">https://www.scala-js.org/doc/interoperability/facade-types.html</a><a
+href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a
+href="https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html#defining-types"
+class="uri"
+target="_blank">https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html#defining-types</a><a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a
+href="https://www.scala-js.org/libraries/facades.html" class="uri"
+target="_blank">https://www.scala-js.org/libraries/facades.html</a><a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn8"><p>这个观点可能会引发嘴仗。这么说并不意味着可以无视语言生态里那些开源者的贡献，毕竟我自己勉强也算是其中一员。<a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p><a
+href="https://johnnyreilly.com/definitely-typed-the-movie#boris-yankov"
+class="uri"
+target="_blank">https://johnnyreilly.com/definitely-typed-the-movie#boris-yankov</a><a
+href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p><a href="https://www.youtube.com/watch?v=R1Z_u2rEDj4"
+class="uri"
+target="_blank">https://www.youtube.com/watch?v=R1Z_u2rEDj4</a><a
+href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p><a
+href="https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype"
+class="uri"
+target="_blank">https://www.typescriptlang.org/docs/handbook/utility-types.html#partialtype</a><a
+href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/plog"><span class="icons-outlined align-bottom">tag</span>码志</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2025 zhongl.fun</p></footer></main></body></html>

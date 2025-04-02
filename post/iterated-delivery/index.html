@@ -1,0 +1,94 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>迭代交付</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="https://en.wikipedia.org/wiki/CI/CD" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2019-04-15">Apr 15, 2019</time><h1>迭代交付</h1></header><figure>
+<img src="7ea6477dfb4c5eefdc59b400631ffe511de65185.jpg"
+class="grayscale" alt="迭浪" />
+<figcaption aria-hidden="true">迭浪</figcaption>
+</figure>
+<div class="lead">
+<p>CICD<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>已经屡见不鲜了，然而在实践过程中，我们很有可能遗忘了其中隐含的一个前提，使得CICD落地的效果大打折扣。</p>
+</div>
+<p>正如团队里有人提出如下疑问：</p>
+<blockquote>
+<p>对于一个长流程如何做到持续集成？若一个长流程本身就有几天的开发工作量，那该怎么去做持续集成？</p>
+</blockquote>
+<blockquote>
+<p>先将流程的框架搭好再逐步去完善其中的细节？那框架应该达到什么程度，若中间涉及到数据存取的使用、依赖，因依赖部件未完成而导致无法集成怎么办？</p>
+</blockquote>
+<p>软件开发长久以来受瀑布式开发<a href="#fn2" class="footnote-ref"
+id="fnref2"
+role="doc-noteref"><sup>2</sup></a>模式的影响，让我们惯性的认为集成是在所有组件功能完备以后才开始的。然而，迭代式开发<a
+href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>打破了瀑布的模式，强调以增量的方式，快速<strong>交付-验证-改进-再交付</strong>，如此迭代提升效率。CICD正是在迭代交付的背景下发展出来的.</p>
+<div class="alert" data-icon="">
+<p>迭代交付这个前提并非必要的，即便没有，实施CICD价值仍然是有的。不过，若能具备这个前提，无疑能让CICD更早的产生收益。</p>
+</div>
+<p>讲到这里，关于迭代交付这个概念还是太虚，不容易理解。 那么就来个栗子
+🌰 吧.</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">interface</span> FullTextSearchService <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">List</span><span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;</span> <span class="fu">search</span><span class="op">(</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">String</span> keyword</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">);</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>假设，要实现一个全文查询服务(<code>FullTextSearchService</code>)如上接口代码。根据设计其实现会非常复杂，包括：</p>
+<ul>
+<li>数据聚合</li>
+<li>相关性排序</li>
+<li>分页</li>
+<li>缓存优化</li>
+</ul>
+<p>从零实现上述特性的话，怕是要数周不止。为了能够尽早集成，
+我们可以提供一个最小可用交付版本：</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> EmptyResultSearchService</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">implements</span> FullTextSearchService <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Override</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="bu">List</span><span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;</span> <span class="fu">search</span><span class="op">(</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>      <span class="bu">String</span> keyword</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">Collections</span><span class="op">.</span><span class="fu">empty</span><span class="op">();</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>你可能会认为这有什么好测的嘛?
+是的，只有一行代码，显然不是期望中最终交付的样子，但就是这样一个最小可用版本，能够让你的代码<strong>编译-打包-部署-运行</strong>。</p>
+<p>集成测试重点在于验证系统各组件之间的连通性，即接口的实现是否满足契约。换句话说，这个版本的集成测试重点是，<code>search</code>方法能否调通。</p>
+<p>那是不是说集成测试就不关心逻辑功能了?</p>
+<p>不是，能用集成测试覆盖所有场景那最好，
+但那样的话自动化测试的研发投入很可能不亚于功能实现。相较而言，采用单元测试来覆盖接口的各种实现情况，才是投入产出比更高的选择。</p>
+<p>以此类推，随着代码逻辑的叠加，每次迭代的版本就离最终交付的目标更近，同时每次的增量变动一旦出现偏差，即可在CICD中被发现并得以纠正。比如为了实现分页，接口需要调整：</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">interface</span> FullTextSearchService <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">List</span><span class="op">&lt;</span><span class="bu">String</span><span class="op">&gt;</span> <span class="fu">search</span><span class="op">(</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="bu">String</span> keyword<span class="op">,</span> </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span> page<span class="op">,</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="dt">int</span><span class="op">,</span> pageSize</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">);</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>接口的调用方若是同一个工程，那编译阶段就能发现问题，这是最幸运的。然而，
+微服务架构下，调用方很可能是其他人开发的另一个服务，
+这样破坏契约的变动越晚发现，代价就越惨痛。</p>
+<p>知易行难啊，如果你问我，如何把握每次迭代的最小可用增量?
+惭愧，我没有标准答案，唯有具体情况具体分析啦，共勉！</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a href="https://en.wikipedia.org/wiki/CI/CD"
+target="_blank">https://en.wikipedia.org/wiki/CI/CD</a><a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://zh.wikipedia.org/wiki/%E7%80%91%E5%B8%83%E6%A8%A1%E5%9E%8B"
+target="_blank">https://zh.wikipedia.org/wiki/%E7%80%91%E5%B8%83%E6%A8%A1%E5%9E%8B</a><a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a
+href="https://zh.wikipedia.org/wiki/%E8%BF%AD%E4%BB%A3%E5%BC%8F%E5%BC%80%E5%8F%91"
+target="_blank">https://zh.wikipedia.org/wiki/%E8%BF%AD%E4%BB%A3%E5%BC%8F%E5%BC%80%E5%8F%91</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/thought"><span class="icons-outlined align-bottom">tag</span>若有所思</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2025 zhongl.fun</p></footer></main></body></html>

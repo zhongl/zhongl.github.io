@@ -1,0 +1,130 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>用类型表达业务规则</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="Designing with Types." /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-04-18">Apr 18, 2024</time><h1>用类型表达业务规则</h1></header><div class="lead">
+<p>Designing with Types.</p>
+</div>
+<h2 id="用户">用户</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> <span class="kw">class</span> <span class="fu">User</span> <span class="op">(</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  name<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> </span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  email<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> </span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  phone<span class="op">:</span> <span class="ex">String</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">)</span> </span></code></pre></div>
+<p>注意看<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>，这是几乎所有业务系统都会定义的一个类，用户（User）。当然，实际应用中用户的属性要更多更复杂。这里姓名（name），邮箱（email）以及电话（phone）已经足够表达了。</p>
+<h2 id="二选一">二选一</h2>
+<p>系统的早期，需求文档里关于用户的描述，可能会有这么一条业务规则：</p>
+<blockquote>
+<ul>
+<li>用户的邮箱和电话二者至少要有一个;</li>
+</ul>
+</blockquote>
+<p>为了体现这条规则，可能最容易实现方式如下：</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">object</span> User<span class="op">:</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">emailOnly</span><span class="op">(</span>name<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> email<span class="op">:</span> <span class="ex">String</span><span class="op">)</span> <span class="op">=</span> </span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span>name<span class="op">,</span> <span class="bu">Some</span><span class="op">(</span>email<span class="op">),</span> <span class="bu">None</span><span class="op">)</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">phoneOnly</span><span class="op">(</span>name<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> phone<span class="op">:</span> <span class="ex">String</span><span class="op">)</span> <span class="op">=</span> </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span>name<span class="op">,</span> <span class="bu">None</span><span class="op">,</span> <span class="bu">Some</span><span class="op">(</span>phone<span class="op">))</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> <span class="fu">apply</span><span class="op">(</span>name<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> email<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> phone<span class="op">:</span> <span class="ex">String</span><span class="op">)</span> <span class="op">=</span> </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">new</span> <span class="fu">User</span><span class="op">(</span>name<span class="op">,</span> <span class="bu">Some</span><span class="op">(</span>email<span class="op">),</span> <span class="bu">Some</span><span class="op">(</span>phone<span class="op">))</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> <span class="kw">class</span> User <span class="kw">private</span> <span class="op">(</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  name<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> </span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  email<span class="op">:</span> <span class="ex">Option</span><span class="op">[</span><span class="ex">String</span><span class="op">],</span> </span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  phone<span class="op">:</span> <span class="ex">Option</span><span class="op">[</span><span class="ex">String</span><span class="op">]</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="op">)</span> </span></code></pre></div>
+<p>这里 <code>private</code> 限制
+<code>class User</code>构造器的可见性，以确保用户的实例化只能采用
+<code>object User</code> 提供的工厂方法。<a href="#fn2"
+class="footnote-ref" id="fnref2" role="doc-noteref"><sup>2</sup></a></p>
+<h2 id="联合类型union-type">联合类型（Union Type）</h2>
+<p>其实，更为优雅简洁的方法是：</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>enum Contact<span class="op">:</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">EmailOnly</span><span class="op">(</span>value<span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">PhoneOnly</span><span class="op">(</span>value<span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">EmailAndPhone</span><span class="op">(</span>email<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> phone<span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="cf">case</span> <span class="kw">class</span> <span class="fu">User</span><span class="op">(</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  name<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> </span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  contact<span class="op">:</span> Contact</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="op">)</span></span></code></pre></div>
+<p><code>enum Contact</code>就是联合类型，其字面含义就是，联系方式有三种情况，即：</p>
+<ol type="1">
+<li>只有邮箱</li>
+<li>只有电话</li>
+<li>二者皆有</li>
+</ol>
+<p>相比较之前的版本，这在业务含义的表达上，更加显而易见了。</p>
+<h2 id="需求变更">需求变更</h2>
+<p>大概率会有一天（通常不会让你等太久），你被告知系统需要支持用户添加<strong>备用</strong>的邮箱和电话。有了之前的改进，应对这样的变化并不难，就是需要机械的添加多出来的
+<code>case</code>。只是这看似重复，但又有不同的组合，容易让人抠掉头发。</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>enum Contact<span class="op">:</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">EmailOnly</span><span class="op">(</span>value<span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">PhoneOnly</span><span class="op">(</span>value<span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">EmailAndPhone</span><span class="op">(</span>email<span class="op">:</span> <span class="ex">String</span><span class="op">,</span> phone<span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">EmailAndBackupEmailAndPhone</span><span class="op">(...)</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">EmailAndPhoneAndBackupPhone</span><span class="op">(...)</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> Email<span class="op">...(...)</span></span></code></pre></div>
+<p>其实，联系方式最基本的只有两种：邮箱和电话，其余则是二者组合的变种。由此可见，<a
+href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a></p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>enum Contact<span class="op">:</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">Email</span><span class="op">(</span>value<span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">Phone</span><span class="op">(</span>value<span class="op">:</span> <span class="ex">String</span><span class="op">)</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="fu">Multi</span><span class="op">(</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    primary<span class="op">:</span> Contact<span class="op">,</span> </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>    secondary<span class="op">:</span> Contact<span class="op">,</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    more<span class="op">:</span> <span class="ex">List</span><span class="op">[</span>Contact<span class="op">]</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">)</span></span></code></pre></div>
+<h2 id="结语">结语</h2>
+<p>编程语言的类型能力远比我们想象的强大，充分利用它们去表达业务（逻辑）规则，可以让编译器帮我们更早地发现问题。本文谈及的，仅仅只是九牛之一毛。然而，浮躁的环境让人疲于奔命，而放弃了主动发现、沉浸阅读、以及深度思考。希望我的短文能够帮你把它们都找回来，而不是在
+<strong>卷不赢</strong> 与 <strong>躺不平</strong> 之间来回摇摆。</p>
+<figure>
+<img src="0-3943a56c68e216b4c135f12c081b44082f147e85.png"
+alt="Too busy to learn" />
+<figcaption aria-hidden="true">Too busy to learn</figcaption>
+</figure>
+<p>本文是受「Designing with Types」<a href="#fn4" class="footnote-ref"
+id="fnref4" role="doc-noteref"><sup>4</sup></a>
+系列文章的启发，而浓缩出来的。因此，非常推荐你去阅读原文，详见脚注中链接。同时，这里推荐一款浏览器的双语翻译插件「沉浸式翻译」<a
+href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a>，方便提升阅读效率。我也是刚知道它，相见恨晚，这还要感谢「硬地骇客」<a
+href="#fn6" class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>这当博客节目，也推荐订阅收听。Enjoy！</p>
+<figure>
+<img src="hhpod.jpg" alt="HardHacker Podcast" />
+<figcaption aria-hidden="true">HardHacker Podcast</figcaption>
+</figure>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>文中代码片段采用的是 Scala。<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>这里有意省略了邮箱和电话的有效性验证逻辑。<a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>这也是 <strong>代数数据类型</strong>
+在建模应用中的体现。<a href="#fnref3" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><a
+href="https://fsharpforfunandprofit.com/series/designing-with-types/"
+class="uri"
+target="_blank">https://fsharpforfunandprofit.com/series/designing-with-types/</a><a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a href="https://immersivetranslate.com/" class="uri"
+target="_blank">https://immersivetranslate.com/</a><a href="#fnref5"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a href="https://hardhacker.com/podcasts" class="uri"
+target="_blank">https://hardhacker.com/podcasts</a><a href="#fnref6"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/fp"><span class="icons-outlined align-bottom">tag</span>函数式编程</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2025 zhongl.fun</p></footer></main></body></html>
