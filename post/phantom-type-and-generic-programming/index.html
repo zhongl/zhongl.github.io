@@ -1,0 +1,202 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>关于泛型我们可能一无所知</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="类型声明是给编译器的提示词。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-09-19">Sep 19, 2024</time><h1>关于泛型我们可能一无所知</h1></header><div class="lead">
+<p>类型声明是给编译器的提示词。</p>
+</div>
+<figure>
+<img src="0-d10bf69c7411664645066b8e59ed4e836e1e8d86.jpg"
+alt="图片来自网络" />
+<figcaption aria-hidden="true">图片来自网络<a href="#fn1"
+class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a></figcaption>
+</figure>
+<p>接上回，我在模式匹配的雕虫小技，为了是方便不同页面上逻辑处理。这意味着存在多个页面的逻辑，需要我来进行合理的划分和组织。</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Mutation <span class="op">=</span> <span class="op">(</span><span class="ex">URL</span><span class="op">,</span> <span class="bu">Seq</span><span class="op">[</span><span class="ex">Element</span><span class="op">])</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> <span class="ex">Callback</span> <span class="op">=</span> Mutation <span class="op">=&gt;</span> <span class="bu">Unit</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>given <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span><span class="st">&quot;path/a&quot;</span><span class="op">,</span> _<span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">???</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span><span class="st">&quot;path/b&quot;</span><span class="op">,</span> _<span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">???</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> _ <span class="op">=&gt;</span> <span class="co">// ignore</span></span></code></pre></div>
+<p>将它们放置在一个 <code>Callback</code>
+里，显然是最朴素直白地。咋看起来，还有种简洁的美感呢。嗯，所有的代码粪池，都从无知乐观开始的。</p>
+<p>相信略有见识的同学会和我想到一块去，那就是先将每个页面的逻辑抽离到一个独立的模块（文件）里，再在
+<code>Callback</code> 里将其组合起来。在 Scala 里，我们采用
+<code>PartialFunction[A, B]</code> 要来做这点还是很容易的。</p>
+<div class="alert" data-icon="">
+<p><code>PartialFunction[A, B]</code> 可以理解能够处理部分
+<code>A</code> 的函数 <code>A =&gt; B</code> ，即当输入类型为
+<code>A</code> 参数时，可能成功返回类型 <code>B</code> 的值
+；亦或是，会抛出 <code>scala.MatchError</code>
+的异常，表示着当前参数值此函数无法处理。</p>
+</div>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Proceed <span class="op">=</span> <span class="bu">PartialFunction</span><span class="op">[</span>Mutation<span class="op">,</span> <span class="bu">Unit</span><span class="op">]</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co">// PageA.scala</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> pageA<span class="op">:</span> Proceed <span class="op">=</span> </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span><span class="st">&quot;path/a&quot;</span><span class="op">,</span> _<span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="op">???</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="co">// PageB.scala</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> pageA<span class="op">:</span> Proceed <span class="op">=</span> </span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span><span class="st">&quot;path/b&quot;</span><span class="op">,</span> _<span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="op">???</span></span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Main.scala</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>given <span class="ex">Callback</span> <span class="op">=</span> pageA </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">.</span><span class="fu">orElse</span><span class="op">(</span>pageB<span class="op">)</span> </span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">.</span><span class="fu">orElse</span><span class="op">(</span>ignore<span class="op">)</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> ignore<span class="op">:</span> <span class="ex">Process</span> <span class="op">=</span> </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> _ <span class="op">=&gt;</span> <span class="co">// ignore  </span></span></code></pre></div>
+<p>第一步，在不同的文件模块中实现不同页面的处理逻辑 <code>Proceed</code>
+(<code>PartialFunction</code> 的别名)。第二步，用 <code>orElse</code>
+方法将多个页面逻辑组合在一起。注意，不要忘了最后那个需要
+<code>ignore</code> 的处理。</p>
+<p>至此，问题看似被完美的处理了，但本篇的主题还未有触及。显然，这里还有更佳通用的处理方式。</p>
+<h2 id="phantom-type">Phantom Type</h2>
+<p>直译为 <strong>幻影类型</strong>。很玄乎的样子，还是来看代码吧，</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Proceed<span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="bu">PartialFunction</span><span class="op">[</span>Mutation<span class="op">,</span> <span class="bu">Unit</span><span class="op">]</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="kw">object</span> Proceed<span class="op">:</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">def</span> apply<span class="op">[</span>A<span class="op">](</span>using pa<span class="op">:</span> Proceed<span class="op">[</span>A<span class="op">])</span> <span class="op">=</span> pa  </span></code></pre></div>
+<p>泛化的类型别名 <code>Proceed</code> 有个类型参数
+<code>A</code>，它（在等式左边）看得见，却（在等式右边）用不着，这就叫
+<strong>幻影类型</strong>。</p>
+<p>这能有什么意义呢？嗯，这对编译器来说非常有意义。回看前文的
+<code>Proceed</code> 的定义下，<code>pageA</code> 和 <code>pageB</code>
+是同类不同名的两个实例。有了幻影类型后，则让编译器可以在类型上区分二者。</p>
+<h2 id="marker-type">Marker Type</h2>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">// PageA.scala</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">trait</span> PageA</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>given Proceed<span class="op">[</span>PageA<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span><span class="ex">URL</span><span class="op">(</span><span class="st">&quot;path/a&quot;</span><span class="op">,</span> _<span class="op">),</span> _<span class="op">)</span> <span class="op">=&gt;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">???</span> </span></code></pre></div>
+<p>以上，定义的 <code>PageA</code> 是一个
+<strong>标记（Marker）类型</strong> ，相当于
+<code>java.io.Serializable</code> 这类标记接口（Marker Interface） <a
+href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>。如法炮制 <code>PageB</code>，便可
+<code>given</code> 两种不同处理类型：<code>Proceed[PageA]</code> 和
+<code>Proceed[PageA]</code>。然后，就有了</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Main.scala</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>given <span class="ex">Callback</span> <span class="op">=</span> </span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  Proceed<span class="op">[</span>PageA<span class="op">]</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">orElse</span><span class="op">(</span>Proceed<span class="op">[</span>PageB<span class="op">])</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="op">.</span><span class="fu">orElse</span><span class="op">(</span>ignore<span class="op">)</span></span></code></pre></div>
+<p>咋看上去，还不如上一个版本简洁。别急，如此写法已经有了本质上的跃迁，即从
+<strong>硬编码</strong> 方式，优化成了 <strong>依赖注入</strong>
+的方式。换言之，实现了依赖倒置。当然，以上还不是最终版本，而是为了方便理解最终版的过渡版本。最终，是这样的：</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Main.scala  </span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>given <span class="ex">Callback</span> <span class="op">=</span>     </span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  Proceed<span class="op">[(</span>PageA<span class="op">,</span> PageB<span class="op">)]</span></span></code></pre></div>
+<h2 id="tuples-generic-programming">Tuples &amp; Generic
+Programming</h2>
+<p>在 Scala 3
+中，元组（Tuple）类型引入一个非常重大的改变，这使得泛化（或通用）编程（Generic
+Programming）更为容易 <a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>。这个改变的核心是，有了
+<strong>空元组（EmptyTuple）</strong>，它的价值相当于数字
+<strong>零</strong>。</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="op">(</span>PageA<span class="op">,</span> PageB<span class="op">)</span> <span class="op">=:=</span> PageA <span class="op">*:</span> PageB <span class="op">*:</span> EmptyTuple</span></code></pre></div>
+<p>也就是说，二元组 <code>(PageA, PageB)</code>，等价于在
+<code>EmptyTuple</code> 上先后叠加 <code>PageB</code> 和
+<code>PageA</code>。有没有和列表 <code>1 :: 2 :: Nil</code>
+很像？像，就对了！无生一，一生二，二生无穷。这意味着，我们可以实现基于类型的组合啊。</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co">// EmptyTuple extends Tuple</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>given Proceed<span class="op">[</span>EmptyTuple<span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> _ <span class="op">=&gt;</span> <span class="co">// ignore</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>given <span class="op">[</span>H<span class="op">,</span> T <span class="op">&lt;:</span> Tuple<span class="op">](</span>using</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  Proceed<span class="op">[</span>H<span class="op">],</span> Proceed<span class="op">[</span>T<span class="op">]</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="op">):</span> Proceed<span class="op">[</span>H <span class="op">*:</span> T<span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  Proceed<span class="op">[</span>H<span class="op">]</span> orElse Proceed<span class="op">[</span>T<span class="op">]</span></span></code></pre></div>
+<p>看懂以上组合实现可能不容易，其中存在一个元组叠加的
+<strong>递归</strong>
+，耐心地给自己多一点时间细品，你会和我一样豁然开朗，柳暗花明的。</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>Proceed<span class="op">[(</span>PageA<span class="op">,</span> PageB<span class="op">)]</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a> <span class="op">=:=</span> Proceed<span class="op">[</span>PageA <span class="op">*:</span> PageB <span class="op">*:</span> EmptyTuple<span class="op">]</span></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a> <span class="op">=:=</span> Proceed<span class="op">[</span>PageA<span class="op">]</span> </span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>      orElse Proceed<span class="op">[</span>PageB<span class="op">]</span> </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>      orElse Proceed<span class="op">[</span>EmptyTuple<span class="op">]</span></span></code></pre></div>
+<p>值得注意地是，以上代码出于排版和解读需要，部分做了精简，存在编译错误是情理之中的。有把玩代码需求的，可查看
+<code>Proceed</code> 的完整代码 <a href="#fn4" class="footnote-ref"
+id="fnref4"
+role="doc-noteref"><sup>4</sup></a>。此外，代码仓库还有更多泛化编程实际应用案例可供参考
+<a href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a> <a href="#fn6" class="footnote-ref"
+id="fnref6" role="doc-noteref"><sup>6</sup></a> <a href="#fn7"
+class="footnote-ref" id="fnref7"
+role="doc-noteref"><sup>7</sup></a>。</p>
+<p>泛化编程是很值得玩味的，它让我对于 <strong>组合</strong>
+的理解又上升了一个层次，以上内容远不及全部。有兴趣深入的同学，我非常推荐去听听访谈
+Miles Sabin 的播客 <a href="#fn8" class="footnote-ref" id="fnref8"
+role="doc-noteref"><sup>8</sup></a>，他是 Scala 泛化编程库 shapeless <a
+href="#fn9" class="footnote-ref" id="fnref9"
+role="doc-noteref"><sup>9</sup></a> 的作者，进而深远地影响了 Scala 3
+中不少重大特性。</p>
+<p>待续回见。</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://www.deviantart.com/giadina96/art/GoT-you-know-nothing-Jon-Snow-376890774"
+class="uri"
+target="_blank">https://www.deviantart.com/giadina96/art/GoT-you-know-nothing-Jon-Snow-376890774</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://en.wikipedia.org/wiki/Marker_interface_pattern"
+class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Marker_interface_pattern</a><a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a
+href="https://www.scala-lang.org/2021/02/26/tuples-bring-generic-programming-to-scala-3.html"
+class="uri"
+target="_blank">https://www.scala-lang.org/2021/02/26/tuples-bring-generic-programming-to-scala-3.html</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><a
+href="https://github.com/hanabix/mpb/blob/356ad801f9964ceba42f2338f9f9a7f55373a774/src/core/Proceed.scala"
+class="uri"
+target="_blank">https://github.com/hanabix/mpb/blob/356ad801f9964ceba42f2338f9f9a7f55373a774/src/core/Proceed.scala</a><a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><a
+href="https://github.com/hanabix/mpb/blob/356ad801f9964ceba42f2338f9f9a7f55373a774/src/plotly/Axis.scala"
+class="uri"
+target="_blank">https://github.com/hanabix/mpb/blob/356ad801f9964ceba42f2338f9f9a7f55373a774/src/plotly/Axis.scala</a><a
+href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a
+href="https://github.com/hanabix/mpb/blob/356ad801f9964ceba42f2338f9f9a7f55373a774/src/garmin/read/package.scala"
+class="uri"
+target="_blank">https://github.com/hanabix/mpb/blob/356ad801f9964ceba42f2338f9f9a7f55373a774/src/garmin/read/package.scala</a><a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a
+href="https://github.com/hanabix/mpb/blob/356ad801f9964ceba42f2338f9f9a7f55373a774/src/plotly/Trace.scala"
+class="uri"
+target="_blank">https://github.com/hanabix/mpb/blob/356ad801f9964ceba42f2338f9f9a7f55373a774/src/plotly/Trace.scala</a><a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p><a
+href="https://corecursive.com/008-generic-programming-and-shapeless-with-miles-sabin/"
+class="uri"
+target="_blank">https://corecursive.com/008-generic-programming-and-shapeless-with-miles-sabin/</a><a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p><a href="https://github.com/milessabin/shapeless"
+class="uri"
+target="_blank">https://github.com/milessabin/shapeless</a><a
+href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/plog"><span class="icons-outlined align-bottom">tag</span>码志</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2026 zhongl.fun</p></footer></main></body></html>

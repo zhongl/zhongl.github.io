@@ -1,0 +1,214 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>说说「直给风格」编程</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="如果你讨厌 Monad，你会喜欢它。如果你喜欢 Monad，你依旧会喜欢它。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-04-27">Apr 27, 2024</time><h1>说说「直给风格」编程</h1></header><blockquote>
+<p>如果你讨厌 Monad，你会喜欢它。如果你喜欢 Monad，你依旧会喜欢它。</p>
+</blockquote>
+<p><cite>Noel Welsh，2024 <a href="#fn1" class="footnote-ref"
+id="fnref1" role="doc-noteref"><sup>1</sup></a></cite></p>
+<figure>
+<img src="retwitter.png" alt="RT by Odersky" />
+<figcaption aria-hidden="true">RT by Odersky</figcaption>
+</figure>
+<p>这个主题我憋了有段时间了，可想的愈多，就愈发难以开头。今天看到
+Odersky 的 RT <a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>，忍不住蹭个热度，只当是给自己挖些坑先。什么时候来填，就看被催更的力度啦。</p>
+<h2 id="monad-与-effect-的联姻-marriage">Monad 与 Effect 的联姻 <a
+href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a></h2>
+<p>1989年，Moggi <a href="#fn4" class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a> 将范畴论里的 Monad <a href="#fn5"
+class="footnote-ref" id="fnref5" role="doc-noteref"><sup>5</sup></a>
+引入到了编程语言的世界 <a href="#fn6" class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>。很快，Wadler <a href="#fn7"
+class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>
+意识到 Monad 对于纯（Pure）函数式编程的巨大价值，并将其引入到 Haskell
+当中，进而构建了一套系统来对付现实编程里的头号劲敌 ——
+<strong>Effect</strong>。</p>
+<blockquote>
+<p><u><strong>Monads</strong></u> increase the ease with which programs
+may be modified. They can mimic the <u><strong>effect</strong></u> of
+impure features such as <u>exceptions, state, and continuations</u>; and
+also provide effects not easily achieved with such features.</p>
+</blockquote>
+<p><cite>Philip Wadler，1992 <a href="#fn8" class="footnote-ref"
+id="fnref8" role="doc-noteref"><sup>8</sup></a></cite></p>
+<p>程序与真实世界的交互，离不开对 <em>状态</em> 、 <em>文件</em> 、
+<em>网络</em> 的读写，有的操作可能需要是 <em>异步</em>
+的，有的甚至还会遭遇 <em>异常</em> 情况，这些都是 Effect。当然，Monad
+不是编程语言应对 Effect 的唯一办法 <a href="#fn9" class="footnote-ref"
+id="fnref9" role="doc-noteref"><sup>9</sup></a>，但 Wadler
+认为它是一个更容易的办法。</p>
+<p>由于 Haskell 在函数式语言中是旗帜般的存在，也令 Monad
+几乎成为了函数式编程的代名词。我想，这大概是劝退不少想要学习函数式语言的人的主要原因吧。</p>
+<h2 id="direct-style-scala">Direct Style Scala</h2>
+<p>2023年的 Scalar Conference 上，Odersky
+给在场的观众一个意外的惊喜，展示了用 Scala 3 的黑魔（语）法调教 Effect
+的一些代码示例，这样的代码风格被他称为 Direct Style <a href="#fn10"
+class="footnote-ref" id="fnref10"
+role="doc-noteref"><sup>10</sup></a>。而我管它叫「直给风格」，主打一个「返璞归真」。</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">// monadic-style </span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> sum <span class="op">=</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    x <span class="op">&lt;-</span> <span class="ex">Future</span><span class="op">(</span>c1<span class="op">.</span>read<span class="op">)</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    y <span class="op">&lt;-</span> <span class="ex">Future</span><span class="op">(</span>c2<span class="op">.</span>read<span class="op">)</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">yield</span> x <span class="op">+</span> y</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co">// direct-style </span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> sum <span class="op">=</span> <span class="ex">Future</span><span class="op">:</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">val</span> f1 <span class="op">=</span> <span class="ex">Future</span><span class="op">(</span>c1<span class="op">.</span>read<span class="op">)</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">val</span> f2 <span class="op">=</span> <span class="ex">Future</span><span class="op">(</span>c2<span class="op">.</span>read<span class="op">)</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>  f1<span class="op">.</span>value <span class="op">+</span> f2<span class="op">.</span>value</span></code></pre></div>
+<blockquote>
+<p>There will be a move away from monads as the primary way of code
+composition.</p>
+</blockquote>
+<p><cite>Martin Odersky，2023</cite></p>
+<p>简言之，Scala 3 能让程序员以「直给风格」代码应对 Effect
+，且保留函数组合的优势。像是，标准库内建的
+<code>boundary &amp; break</code>、 异步编程库 Gears <a href="#fn11"
+class="footnote-ref" id="fnref11"
+role="doc-noteref"><sup>11</sup></a>、和聚焦并发与弹性编程的 Ox <a
+href="#fn12" class="footnote-ref" id="fnref12"
+role="doc-noteref"><sup>12</sup></a>。</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Simple compositions</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co">// No traverse or lift is needed</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">acrobatics</span><span class="op">(</span>xs<span class="op">:</span> <span class="ex">List</span><span class="op">[</span><span class="ex">Future</span><span class="op">[</span><span class="ex">Result</span><span class="op">[</span>T<span class="op">,</span> E<span class="op">]]])</span> <span class="op">:</span> </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="ex">Future</span><span class="op">[</span><span class="ex">Result</span><span class="op">[</span><span class="ex">List</span><span class="op">[</span>T<span class="op">],</span> E<span class="op">]]</span> <span class="op">=</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="ex">Future</span><span class="op">:</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>      <span class="ex">Result</span><span class="op">:</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>        xs<span class="op">.</span><span class="fu">map</span><span class="op">(</span>_<span class="op">.</span>value<span class="op">.?)</span></span></code></pre></div>
+<p>与其去看 Odersky 的演讲视频 <a href="#fn13" class="footnote-ref"
+id="fnref13" role="doc-noteref"><sup>13</sup></a>，不如去看 Wampler
+的「Scala 3: What Is “Direct Style”?」<a href="#fn14"
+class="footnote-ref" id="fnref14" role="doc-noteref"><sup>14</sup></a>
+和 Welsh 的「Direct-style Effects Explained」<a href="#fn15"
+class="footnote-ref" id="fnref15"
+role="doc-noteref"><sup>15</sup></a>，更容易消化一些。</p>
+<h2 id="能力产生作用">「能力」产生「作用」</h2>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co">// Effect</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">f</span><span class="op">():</span> T throws E           </span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">// Capability</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">f</span><span class="op">()(</span>using CanThrow<span class="op">[</span>E<span class="op">]):</span> T </span></code></pre></div>
+<p>然而，Odersky 的野心远不止于此。</p>
+<p>2022年，他在主题 Simple Scala 的演讲里加了一个彩蛋 ——
+Caprese，这个项目旨在探索一种创新性的类型系统，用
+Capabilities（能力）这一概念，来捕获、跟踪、控制程序中的
+Resources（资源） 和 Effects（作用）<a href="#fn16" class="footnote-ref"
+id="fnref16" role="doc-noteref"><sup>16</sup></a>。</p>
+<p>2023年底，ACM 上有一篇名为「Capturing Types」文章被发表 <a
+href="#fn17" class="footnote-ref" id="fnref17"
+role="doc-noteref"><sup>17</sup></a>，可视作项目公开的最新成果。</p>
+<h2 id="最后">最后</h2>
+<blockquote>
+<p>2003 - A drunken Martin Odersky sees a Reese’s Peanut Butter Cup ad
+featuring somebody’s peanut butter getting on somebody else’s chocolate
+and has an idea. He creates Scala, a language that unifies constructs
+from both object oriented and functional languages. This pisses off both
+groups and each promptly declares jihad.</p>
+<p>2003 年 - 醉酒的马丁·奥德斯基 (Martin Odersky)
+看到里斯花生酱杯广告，其中有人将花生酱涂在了别人的巧克力上，他产生了一个想法。他创建了
+Scala，这是一种统一了面向对象语言和函数式语言构造的语言。这激怒了两个团体，每个团体都立即宣布圣战。</p>
+</blockquote>
+<p><cite>JAMES IRY，2009 <a href="#fn18" class="footnote-ref"
+id="fnref18" role="doc-noteref"><sup>18</sup></a></cite></p>
+<p>回首 Scala 这二十年，Odersky
+一直致力于让编程语言变得更简洁更实用，也实实在在地引领着一众后继者 <a
+href="#fn19" class="footnote-ref" id="fnref19"
+role="doc-noteref"><sup>19</sup></a>。我很幸运地见证了其中的一大部分，并在学习和使用
+Scala 的过程中收获众多编程的乐趣。</p>
+<p>明天的 Scala 会是怎样的呢，请同我一起翘首以盼！</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p><a
+href="https://twitter.com/noelwelsh/status/1783496769394950179"
+class="uri"
+target="_blank">https://twitter.com/noelwelsh/status/1783496769394950179</a><a
+href="#fnref1" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p><a
+href="https://twitter.com/odersky/status/1783885477646405805"
+class="uri"
+target="_blank">https://twitter.com/odersky/status/1783885477646405805</a><a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a
+href="https://homepages.inf.ed.ac.uk/wadler/papers/effectstocl/effectstocl.pdf"
+class="uri"
+target="_blank">https://homepages.inf.ed.ac.uk/wadler/papers/effectstocl/effectstocl.pdf</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p><a href="https://en.wikipedia.org/wiki/Eugenio_Moggi"
+class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Eugenio_Moggi</a><a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn5"><p>中文译为“单子”，其实是个非常贴切的翻译，可以背后的概念太过抽象，中译文的采用反而会提升理解门槛。<a
+href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><a
+href="https://www.lfcs.inf.ed.ac.uk/reports/88/ECS-LFCS-88-66/ECS-LFCS-88-66.pdf"
+class="uri"
+target="_blank">https://www.lfcs.inf.ed.ac.uk/reports/88/ECS-LFCS-88-66/ECS-LFCS-88-66.pdf</a><a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a href="https://en.wikipedia.org/wiki/Philip_Wadler"
+class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Philip_Wadler</a><a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p><a
+href="https://jgbm.github.io/eecs762f19/papers/wadler-monads.pdf"
+class="uri"
+target="_blank">https://jgbm.github.io/eecs762f19/papers/wadler-monads.pdf</a><a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p><a
+href="https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/history.pdf"
+class="uri"
+target="_blank">https://www.microsoft.com/en-us/research/wp-content/uploads/2016/07/history.pdf</a>
+参见第七节。<a href="#fnref9" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p>Direct Style 的说法不是 Odersky
+最先提及的，最早及起的可能是 <a
+href="https://dl.acm.org/doi/10.1145/174675.178047"
+target="_blank">Filinski 1994</a>。<a href="#fnref10"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p><a
+href="https://blog.nkagami.me/gears-book/introduction.html" class="uri"
+target="_blank">https://blog.nkagami.me/gears-book/introduction.html</a><a
+href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn12"><p><a href="https://ox.softwaremill.com/latest/"
+class="uri" target="_blank">https://ox.softwaremill.com/latest/</a><a
+href="#fnref12" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn13"><p><a href="https://www.youtube.com/watch?v=0Fm0y4K4YO8"
+class="uri"
+target="_blank">https://www.youtube.com/watch?v=0Fm0y4K4YO8</a><a
+href="#fnref13" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn14"><p><a
+href="https://medium.com/scala-3/scala-3-what-is-direct-style-d9c1bcb1f810"
+class="uri"
+target="_blank">https://medium.com/scala-3/scala-3-what-is-direct-style-d9c1bcb1f810</a><a
+href="#fnref14" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn15"><p><a
+href="https://www.inner-product.com/posts/direct-style-effects/"
+class="uri"
+target="_blank">https://www.inner-product.com/posts/direct-style-effects/</a><a
+href="#fnref15" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn16"><p><a href="https://youtu.be/-qf8yteuxPs?t=2468"
+class="uri" target="_blank">https://youtu.be/-qf8yteuxPs?t=2468</a><a
+href="#fnref16" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn17"><p><a href="https://dl.acm.org/doi/10.1145/3618003"
+class="uri" target="_blank">https://dl.acm.org/doi/10.1145/3618003</a><a
+href="#fnref17" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn18"><p><a
+href="https://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html"
+class="uri"
+target="_blank">https://james-iry.blogspot.com/2009/05/brief-incomplete-and-mostly-wrong.html</a><a
+href="#fnref18" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn19"><p><a href="https://youtu.be/sNos8aGjJMA" class="uri"
+target="_blank">https://youtu.be/sNos8aGjJMA</a><a href="#fnref19"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/fp"><span class="icons-outlined align-bottom">tag</span>函数式编程</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2026 zhongl.fun</p></footer></main></body></html>

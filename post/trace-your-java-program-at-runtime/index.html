@@ -1,0 +1,259 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>动态实时跟踪你的 java 程序</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="之前有写「基于 AOP 的日志调试」讨论一种跟踪 Java 程序的方法，但不是很完美。后来发现了 Btrace，由于它借助动态字节码注入技术，实现优雅且功能强大。只不过，用起来总是磕磕绊绊的，时常为了跟踪某个问题，却花了大把的时间调试 Btrace 的脚本。为此，我尝试将几种跟踪模式固化成脚本模板，待用的时候去调整一下正则表达式之类的。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2011-08-15">Aug 15, 2011</time><h1>动态实时跟踪你的 java 程序</h1></header><div class="lead">
+
+</div>
+<!--more-->
+<p>之前有写「基于 AOP 的日志调试」讨论一种跟踪 Java
+程序的方法，但不是很完美。后来发现了 <a
+href="https://github.com/btraceio/btrace"
+target="_blank">Btrace</a>，由于它借助动态字节码注入技术，实现优雅且功能强大。只不过，用起来总是磕磕绊绊的，时常为了跟踪某个问题，却花了大把的时间调试
+<a href="https://github.com/btraceio/btrace" target="_blank">Btrace</a>
+的脚本。为此，我尝试将几种跟踪模式固化成脚本模板，待用的时候去调整一下正则表达式之类的。</p>
+<h1 id="aop">AOP</h1>
+<p>AOP 是 Btrace, jip<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>
+等众多监测工具的核心思想，用一段代码最容易说明:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="dt">void</span> <span class="fu">say</span><span class="op">(</span><span class="bu">String</span> words<span class="op">){</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  Trace<span class="op">.</span><span class="fu">enter</span><span class="op">();</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="bu">System</span><span class="op">.</span><span class="fu">out</span><span class="op">.</span><span class="fu">println</span><span class="op">(</span>words<span class="op">);</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  Trace<span class="op">.</span><span class="fu">exit</span><span class="op">();</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>如上，<code>Trace.enter()</code> 和 <code>Trace.exit()</code> 将
+<code>say(words)</code>
+内的代码环抱起来，对方法进出的进行切面的处理，便可获取运行时的上下文，如:</p>
+<ul>
+<li>调用栈</li>
+<li>当前线程</li>
+<li>时间消耗</li>
+<li>参数与返回值</li>
+<li>当前实例状态</li>
+</ul>
+<h1 id="实现的选择">实现的选择</h1>
+<p>实现切面的方式，我知道的有以下几种:</p>
+<h2 id="代理-装饰器-模式">代理 (装饰器) 模式</h2>
+<p>设计模式中装饰器模式和代理模式，尽管解决的问题域不同，代码实现是非常相似，均可以实现切面处理，这里视为等价。依旧用代码说明:</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">interface</span> Person <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="dt">void</span> <span class="fu">say</span><span class="op">(</span><span class="bu">String</span> words<span class="op">);</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Officer <span class="kw">implements</span> Person <span class="op">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">void</span> <span class="fu">say</span><span class="op">(</span>words<span class="op">)</span> <span class="op">{</span> <span class="fu">lie</span><span class="op">(</span>words<span class="op">);</span> <span class="op">}</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">void</span> <span class="fu">lie</span><span class="op">(</span><span class="bu">String</span> words<span class="op">)</span> <span class="op">{</span><span class="kw">...</span><span class="op">}</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="bu">Proxy</span> <span class="kw">implements</span> Person <span class="op">{</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">final</span> Officer officer<span class="op">;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="bu">Proxy</span><span class="op">(</span>Officer officer<span class="op">)</span> <span class="op">{</span> <span class="kw">this</span><span class="op">.</span><span class="fu">officer</span> <span class="op">=</span> officer<span class="op">;</span> <span class="op">}</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">void</span> <span class="fu">say</span><span class="op">(</span><span class="bu">String</span> words<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">enter</span><span class="op">();</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    officer<span class="op">.</span><span class="fu">say</span><span class="op">(</span>words<span class="op">);</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">exit</span><span class="op">();</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">void</span> <span class="fu">enter</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">void</span> <span class="fu">exit</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>Person p <span class="op">=</span> <span class="kw">new</span> <span class="bu">Proxy</span><span class="op">(</span><span class="kw">new</span> <span class="fu">Officer</span><span class="op">());</span></span></code></pre></div>
+<p>很明显，上述 <code>enter()</code> 和 <code>exit()</code>
+是实现切面的地方，通过获取 <code>Officer</code> 的 <code>Proxy</code>
+实例，便可对 <code>Officer</code>
+实例的行为进行跟踪。这种方式实现起来最简单，也最直接。</p>
+<h2 id="java-proxy">Java Proxy</h2>
+<p>Java Proxy<a href="#fn2" class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a> 是 JDK 内置的代理
+API，借助反射机制实现。用它来是完成切面则会是:</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> ProxyInvocationHandler <span class="kw">implements</span> <span class="bu">InvocationHandler</span> <span class="op">{</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">final</span> <span class="bu">Object</span> target<span class="op">;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="fu">ProxyInvocationHandler</span><span class="op">(</span><span class="bu">Object</span> target<span class="op">)</span> <span class="op">{</span> <span class="kw">this</span><span class="op">.</span><span class="fu">target</span> <span class="op">=</span> target<span class="op">;}</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="bu">Object</span> <span class="fu">handle</span><span class="op">(</span><span class="bu">Object</span> proxy<span class="op">,</span> <span class="bu">Method</span> method<span class="op">,</span> <span class="bu">Object</span><span class="op">[]</span> args<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">enter</span><span class="op">();</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    method<span class="op">.</span><span class="fu">invoke</span><span class="op">(</span>target<span class="op">,</span> args<span class="op">);</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">exit</span><span class="op">();</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">void</span> <span class="fu">enter</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">void</span> <span class="fu">exit</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="bu">ClassLoader</span> loader <span class="op">=</span> <span class="kw">...</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="bu">Class</span><span class="op">&lt;?&gt;[]</span>  interfaces <span class="op">=</span> <span class="op">{</span>Person<span class="op">.</span><span class="fu">class</span><span class="op">};</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>Person p <span class="op">=</span> <span class="op">(</span>Person<span class="op">)</span><span class="bu">Proxy</span><span class="op">.</span><span class="fu">newInstance</span><span class="op">(</span>loader<span class="op">,</span> interfaces<span class="op">,</span> <span class="kw">new</span> <span class="fu">ProxyInvocationHandler</span><span class="op">(</span><span class="kw">new</span> <span class="fu">Officer</span><span class="op">()));</span></span></code></pre></div>
+<p>相比较上一中方法，这种不太易读，但更为通用，对具体实现依赖很少。</p>
+<h2 id="aspectj">AspectJ</h2>
+<p>AspectJ<a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a> 是基于字节码操作的 AOP 实现，相比较
+Java proxy，它会显得对调用更”透明”，编写更简明 (类似
+DSL)，性能更好。如下代码:</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>pointcut <span class="fu">say</span><span class="op">():</span> <span class="fu">execute</span><span class="op">(*</span> <span class="fu">say</span><span class="op">(..))</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="fu">before</span><span class="op">():</span> <span class="fu">say</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="fu">after</span><span class="op">()</span> <span class="op">:</span> <span class="fu">say</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span></code></pre></div>
+<p>AspectJ 实现切面的时机有两种:</p>
+<ul>
+<li>静态编译</li>
+<li>类加载期编织 (load-time weaving)</li>
+</ul>
+<p>并且它对 IDE 的支持很丰富。</p>
+<h2 id="cglib">CGlib</h2>
+<p>与 AspectJ 一样 CGlib<a href="#fn4" class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a> 也是操作字节码来实现 AOP
+的，使用上与 Java Proxy 非常相似，只是不像 Java Proxy
+对接口有依赖，我们熟知的 Spring, Guice 之类的 IoC 容器实现 AOP
+都是使用它来完成的。</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> <span class="bu">Callback</span> <span class="kw">implements</span> MethodInterceptor <span class="op">{</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="bu">Object</span> <span class="fu">intercept</span><span class="op">(</span><span class="bu">Object</span> obj<span class="op">,</span> java<span class="op">.</span><span class="fu">lang</span><span class="op">.</span><span class="fu">reflect</span><span class="op">.</span><span class="fu">Method</span> method<span class="op">,</span> <span class="bu">Object</span><span class="op">[]</span> args<span class="op">,</span> MethodProxy proxy<span class="op">)</span> <span class="kw">throws</span> <span class="bu">Throwable</span> <span class="op">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">enter</span><span class="op">();</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    proxy<span class="op">.</span><span class="fu">invokeSuper</span><span class="op">(</span>obj<span class="op">,</span> args<span class="op">);</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">exit</span><span class="op">();</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">void</span> <span class="fu">enter</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">private</span> <span class="dt">void</span> <span class="fu">exit</span><span class="op">()</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>Enhancer e <span class="op">=</span> <span class="kw">new</span> <span class="fu">Enhancer</span><span class="op">();</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>e<span class="op">.</span><span class="fu">setSuperclass</span><span class="op">(</span>Officer<span class="op">.</span><span class="fu">class</span><span class="op">);</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>e<span class="op">.</span><span class="fu">setCallback</span><span class="op">(</span><span class="kw">new</span> <span class="bu">Callback</span><span class="op">());</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>Person p <span class="op">=</span> e<span class="op">.</span><span class="fu">create</span><span class="op">();</span></span></code></pre></div>
+<h2 id="字节码操纵">字节码操纵</h2>
+<p>上面四种方法各有适用的场景，但唯独对运行着的 Java
+进程进行动态的跟踪支持不了，当然也许是我了解的不够深入，若有基于上述方案的办法还请不吝赐教。</p>
+<p>还是回到 Btrace<a href="#fn5" class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a> 的思路上来，在理解了它借助
+<code>java.lang.instrument</code> 进行字节码注入的实现原理 <a
+href="#fn6" class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>
+后，实现动态变化跟踪方式或目标应该没有问题。</p>
+<p>借下来的问题，如何操作 (注入)
+字节码实现切面的处理。可喜的是，构建自己的监测工具 <a href="#fn7"
+class="footnote-ref" id="fnref7" role="doc-noteref"><sup>7</sup></a>
+一文给我提供了一个很好的切入点。在此基础上，经过一些对 ASM<a href="#fn8"
+class="footnote-ref" id="fnref8" role="doc-noteref"><sup>8</sup></a>
+的深入研究，可以实现:</p>
+<ul>
+<li>方法调用进入时，获取当前实例 (<code>this</code>) 和参数值列表;</li>
+<li>方法调用出去时，获取返回值;</li>
+<li>方法异常抛出时，触发回调并获取异常实例。</li>
+</ul>
+<p>其切面实现的核心代码如下:</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a> <span class="kw">private</span> <span class="dt">static</span> <span class="kw">class</span> ProbeMethodAdapter <span class="kw">extends</span> AdviceAdapter <span class="op">{</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">protected</span> <span class="fu">ProbeMethodAdapter</span><span class="op">(</span>MethodVisitor mv<span class="op">,</span> <span class="dt">int</span> access<span class="op">,</span> <span class="bu">String</span> name<span class="op">,</span> <span class="bu">String</span> desc<span class="op">,</span> <span class="bu">String</span> className<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>      <span class="kw">super</span><span class="op">(</span>mv<span class="op">,</span> access<span class="op">,</span> name<span class="op">,</span> desc<span class="op">);</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>      start <span class="op">=</span> <span class="kw">new</span> <span class="bu">Label</span><span class="op">();</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>      end <span class="op">=</span> <span class="kw">new</span> <span class="bu">Label</span><span class="op">();</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>      methodName <span class="op">=</span> name<span class="op">;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>      <span class="kw">this</span><span class="op">.</span><span class="fu">className</span> <span class="op">=</span> className<span class="op">;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Override</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">visitMaxs</span><span class="op">(</span><span class="dt">int</span> maxStack<span class="op">,</span> <span class="dt">int</span> maxLocals<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mark</span><span class="op">(</span>end<span class="op">);</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>      <span class="fu">catchException</span><span class="op">(</span>start<span class="op">,</span> end<span class="op">,</span> <span class="bu">Type</span><span class="op">.</span><span class="fu">getType</span><span class="op">(</span><span class="bu">Throwable</span><span class="op">.</span><span class="fu">class</span><span class="op">));</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">dup</span><span class="op">();</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>className<span class="op">);</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>methodName<span class="op">);</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>methodDesc<span class="op">);</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>      <span class="fu">loadThis</span><span class="op">();</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">invokeStatic</span><span class="op">(</span>Probe<span class="op">.</span><span class="fu">TYPE</span><span class="op">,</span> Probe<span class="op">.</span><span class="fu">EXIT</span><span class="op">);</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">visitInsn</span><span class="op">(</span>ATHROW<span class="op">);</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>      <span class="kw">super</span><span class="op">.</span><span class="fu">visitMaxs</span><span class="op">(</span>maxStack<span class="op">,</span> maxLocals<span class="op">);</span></span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Override</span></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">protected</span> <span class="dt">void</span> <span class="fu">onMethodEnter</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>className<span class="op">);</span></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>methodName<span class="op">);</span></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>methodDesc<span class="op">);</span></span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">loadThis</span><span class="op">();</span></span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">loadArgArray</span><span class="op">();</span></span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">invokeStatic</span><span class="op">(</span>Probe<span class="op">.</span><span class="fu">TYPE</span><span class="op">,</span> Probe<span class="op">.</span><span class="fu">ENTRY</span><span class="op">);</span></span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mark</span><span class="op">(</span>start<span class="op">);</span></span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Override</span></span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="kw">protected</span> <span class="dt">void</span> <span class="fu">onMethodExit</span><span class="op">(</span><span class="dt">int</span> opcode<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>opcode <span class="op">==</span> ATHROW<span class="op">)</span> <span class="cf">return</span><span class="op">;</span> <span class="co">// do nothing, @see visitMax</span></span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>      <span class="fu">prepareResultBy</span><span class="op">(</span>opcode<span class="op">);</span></span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>className<span class="op">);</span></span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>methodName<span class="op">);</span></span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">push</span><span class="op">(</span>methodDesc<span class="op">);</span></span>
+<span id="cb6-43"><a href="#cb6-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">loadThis</span><span class="op">();</span></span>
+<span id="cb6-44"><a href="#cb6-44" aria-hidden="true" tabindex="-1"></a>      <span class="fu">invokeStatic</span><span class="op">(</span>Probe<span class="op">.</span><span class="fu">TYPE</span><span class="op">,</span> Probe<span class="op">.</span><span class="fu">EXIT</span><span class="op">);</span></span>
+<span id="cb6-45"><a href="#cb6-45" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-46"><a href="#cb6-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-47"><a href="#cb6-47" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">void</span> <span class="fu">prepareResultBy</span><span class="op">(</span><span class="dt">int</span> opcode<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb6-48"><a href="#cb6-48" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> <span class="op">(</span>opcode <span class="op">==</span> RETURN<span class="op">)</span> <span class="op">{</span> <span class="co">// void</span></span>
+<span id="cb6-49"><a href="#cb6-49" aria-hidden="true" tabindex="-1"></a>        <span class="fu">push</span><span class="op">((</span><span class="bu">Type</span><span class="op">)</span> <span class="kw">null</span><span class="op">);</span></span>
+<span id="cb6-50"><a href="#cb6-50" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span> <span class="cf">else</span> <span class="cf">if</span> <span class="op">(</span>opcode <span class="op">==</span> ARETURN<span class="op">)</span> <span class="op">{</span> <span class="co">// object</span></span>
+<span id="cb6-51"><a href="#cb6-51" aria-hidden="true" tabindex="-1"></a>        <span class="fu">dup</span><span class="op">();</span></span>
+<span id="cb6-52"><a href="#cb6-52" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb6-53"><a href="#cb6-53" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="op">(</span>opcode <span class="op">==</span> LRETURN <span class="op">||</span> opcode <span class="op">==</span> DRETURN<span class="op">)</span> <span class="op">{</span> <span class="co">// long or double</span></span>
+<span id="cb6-54"><a href="#cb6-54" aria-hidden="true" tabindex="-1"></a>          <span class="fu">dup2</span><span class="op">();</span></span>
+<span id="cb6-55"><a href="#cb6-55" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span> <span class="cf">else</span> <span class="op">{</span></span>
+<span id="cb6-56"><a href="#cb6-56" aria-hidden="true" tabindex="-1"></a>          <span class="fu">dup</span><span class="op">();</span></span>
+<span id="cb6-57"><a href="#cb6-57" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb6-58"><a href="#cb6-58" aria-hidden="true" tabindex="-1"></a>        <span class="fu">box</span><span class="op">(</span><span class="bu">Type</span><span class="op">.</span><span class="fu">getReturnType</span><span class="op">(</span>methodDesc<span class="op">));</span></span>
+<span id="cb6-59"><a href="#cb6-59" aria-hidden="true" tabindex="-1"></a>      <span class="op">}</span></span>
+<span id="cb6-60"><a href="#cb6-60" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb6-61"><a href="#cb6-61" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-62"><a href="#cb6-62" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">final</span> <span class="bu">String</span> className<span class="op">;</span></span>
+<span id="cb6-63"><a href="#cb6-63" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">final</span> <span class="bu">String</span> methodName<span class="op">;</span></span>
+<span id="cb6-64"><a href="#cb6-64" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">final</span> <span class="bu">Label</span> start<span class="op">;</span></span>
+<span id="cb6-65"><a href="#cb6-65" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> <span class="dt">final</span> <span class="bu">Label</span> end<span class="op">;</span></span>
+<span id="cb6-66"><a href="#cb6-66" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>更多参考请见这里的 <a href="https://github.com/zhongl/atMonitor"
+target="_blank">Demo</a>，它是 javaagent，在伴随宿主进程启动后，提供
+MBean 可用 jconsole 进行动态跟踪的管理。</p>
+<h1 id="后续的方向">后续的方向</h1>
+<ul>
+<li>提供基于 Web 的远程交互界面;</li>
+<li>提供基于 Shell 的本地命令行接口;</li>
+<li>提供 Profile 统计和趋势输出;</li>
+<li>提供跟踪日志定位与分析。</li>
+</ul>
+<h1 id="参考">参考</h1>
+<ul>
+<li><a
+href="http://www.ibm.com/developerworks/cn/java/j-lo-profiling/index.html?ca=drs-"
+target="_blank">常用 Java Profiling 工具的分析与比较</a></li>
+<li><a
+href="https://www.ibm.com/developerworks/java/library/j-aopwork10/?S_TACT=105AGX52&amp;S_CMP=cn-a-j"
+target="_blank">AOP@Work: Performance monitoring with AspectJ</a></li>
+<li><a
+href="http://java.sun.com/docs/books/jvms/second_edition/html/VMSpecTOC.doc.html"
+target="_blank">The JavaTM Virtual Machine Specification (2nd)</a></li>
+<li><a href="http://www.slideshare.net/cafusic/jvm20101228"
+target="_blank">来自 rednaxelafx 的 JVM 分享</a></li>
+<li><a href="http://commons.apache.org/bcel/manual.html"
+target="_blank">BCEL</a></li>
+</ul>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>http://jiprof.sourceforge.net/<a href="#fnref1"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn2"><p>http://download.oracle.com/javase/6/docs/api/java/lang/reflect/Proxy.html<a
+href="#fnref2" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p>http://www.eclipse.org/aspectj/<a href="#fnref3"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>http://cglib.sourceforge.net/<a href="#fnref4"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p>http://kenai.com/projects/btrace/pages/UserGuide<a
+href="#fnref5" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p>http://kenwublog.com/btrace-theory-analysis<a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li
+id="fn7"><p>http://www.ibm.com/developerworks/cn/java/j-jip/index.html?ca=drs<a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>http://download.forge.objectweb.org/asm/asm-guide.pdf<a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/essay"><span class="icons-outlined align-bottom">tag</span>杂文无序</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2026 zhongl.fun</p></footer></main></body></html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>我所经历的单元测试的三个境界</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="最开始测试也就是代码写完后运行一下看有没有什么问题。那个时候不会认真的去想要测试什么，因为问题会自己找上门来。:P 写个 main 就可以跑起来看看打印出来是不是自己期望的。不出意外的话，一般是各种异常堆栈会最先出现。囧 rz 其实我一个人写来自己用的，有没有单元测试，怎么实现单元测试，真的没有那么重要。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2016-05-18">May 18, 2016</time><h1>我所经历的单元测试的三个境界</h1></header><div class="lead">
+
+</div>
+<!--more-->
+<p>最开始测试也就是代码写完后运行一下看有没有什么问题。那个时候不会认真的去想要测试什么，因为问题会自己找上门来。:P
+写个 <code>main</code>
+就可以跑起来看看打印出来是不是自己期望的。不出意外的话，一般是各种异常堆栈会最先出现。囧
+rz
+其实我一个人写来自己用的，有没有单元测试，怎么实现单元测试，真的没有那么重要。</p>
+<h3 id="为证明而测试">为证明而测试</h3>
+<p>有一天，我得写些代码给其他的程序员用，为了不招来<strong>鄙视</strong>的眼神，被迫得<strong>装逼</strong>写了个单元测试用例:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> XxxHelper <span class="op">{</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="bu">String</span> <span class="fu">magic</span><span class="op">(</span><span class="bu">String</span> s<span class="op">)</span> <span class="op">{</span><span class="kw">...</span><span class="op">}</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> XxxHelperTest <span class="op">{</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">@Test</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="kw">public</span> <span class="dt">void</span> <span class="fu">testMagic</span><span class="op">()</span> <span class="op">{</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    XxxHelper h <span class="op">=</span> <span class="kw">new</span> <span class="fu">XxxHelper</span><span class="op">();</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">assertEquals</span><span class="op">(</span>h<span class="op">.</span><span class="fu">magic</span><span class="op">(</span><span class="st">&quot;hello&quot;</span><span class="op">),</span> <span class="st">&quot;world&quot;</span><span class="op">);</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>当有人叫嚣着告诉我代码有 bug
+的时候，我会把测试用例给他看，证明代码没有 bug。</p>
+<blockquote>
+<p><strong><a href="http://www.mojohaus.org/cobertura-maven-plugin/"
+target="_blank">cobertura</a></strong>
+它是个拉高测试逼格的利器，只要执行
+<code>mvn clean cobertura:cobertura</code>，它便会在运行单元测试后生成一个
+HTML 的覆盖率的报告，非常直观的展现出测试用例覆盖哪些代码行。</p>
+<p>通过它，我可以清楚的了解到测试用例是否足够，有没有覆盖到我<strong>最关心</strong>，<strong>最担心</strong>的那部分逻辑。与此同时，我对代码质量的信心也来源于此。</p>
+</blockquote>
+<figure>
+<img src="cobertura-report.png" alt="cobertura-report" />
+<figcaption aria-hidden="true">cobertura-report</figcaption>
+</figure>
+<blockquote>
+<p><strong>测试覆盖率要达到多少才算好呢？</strong></p>
+<p>这其实不是一个好问题，容易误导我们盲目追求某个数字而忘记做这件事情的初衷。</p>
+<p>数值只是一种程度的参考，关键要看哪些被标红的代码行，斟酌一下：</p>
+<ol type="1">
+<li>有没有必要去追加更多的测试用例去覆盖到？</li>
+<li>这儿也许是过度设计 (或实现)
+的产物，超出了目前交付的目标范围，是删掉，还是创建一个新的分支留待以后再用？</li>
+</ol>
+</blockquote>
+<h3 id="为重构而测试">为重构而测试</h3>
+<blockquote>
+<p>需求唯一不变的就是<strong>变</strong></p>
+</blockquote>
+<p>研发是个<strong>持续迭代</strong>的过程，需求的演化驱动着代码的变迁，其单元测试也是一样。</p>
+<figure>
+<img src="red-green-refactor.png" alt="red-green-refactor" />
+<figcaption aria-hidden="true">red-green-refactor</figcaption>
+</figure>
+<p>然后实际情况可能会是:</p>
+<ol type="1">
+<li>代码各种改…</li>
+<li>跑测试，WTF，失败了？！</li>
+<li>注释掉，嗯，这个世界从此安静啦，嘿嘿嘿~~~</li>
+</ol>
+<blockquote>
+<p>躺枪了吧朋友，不好意思，这纯属蓄意！</p>
+<p>什么？你从来不跑测试… 囧 rz</p>
+</blockquote>
+<p>如果你还是个希望达到这个境界的人，那你需要明白，单元测试是你提交代码前<strong>最后的防线</strong>，它一旦失败就意味你代码<strong>打破之前的设计约定</strong>。</p>
+<p>我们时常扼腕叹息<strong>某个老系统不能动，一动谁也不知道会出什么问题</strong>，此时一定会有个不知趣的人跳出来问<strong>怎么没有测试用例呢？</strong></p>
+<h3 id="为文档而测试">为文档而测试</h3>
+<p>平庸的程序员至少有两件事情最不情愿做：</p>
+<ul>
+<li>如果说写<strong>测试</strong>算一个的话，那么</li>
+<li>写<strong>文档</strong>必须是另一个</li>
+</ul>
+<blockquote>
+<p>“怎么连个文档都没有？”</p>
+</blockquote>
+<p>这是我们在使用别人提供的代码时最常抱怨的一句话了。</p>
+<p><strong>试想一下，要是测试代码就是文档的话，不是一举两得的好事吗？</strong></p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> TraderSteps <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">private</span> Stock stock<span class="op">;</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Given</span><span class="op">(</span><span class="st">&quot;a stock of symbol $symbol and a threshold of $threshold&quot;</span><span class="op">)</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">aStock</span><span class="op">(</span><span class="bu">String</span> symbol<span class="op">,</span> <span class="dt">double</span> threshold<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>        stock <span class="op">=</span> <span class="kw">new</span> <span class="fu">Stock</span><span class="op">(</span>symbol<span class="op">,</span> threshold<span class="op">);</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@When</span><span class="op">(</span><span class="st">&quot;the stock is traded at $price&quot;</span><span class="op">)</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">theStockIsTradedAt</span><span class="op">(</span><span class="dt">double</span> price<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>        stock<span class="op">.</span><span class="fu">tradeAt</span><span class="op">(</span>price<span class="op">);</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Then</span><span class="op">(</span><span class="st">&quot;the alert status should be $status&quot;</span><span class="op">)</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">theAlertStatusShouldBe</span><span class="op">(</span><span class="bu">String</span> status<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">ensureThat</span><span class="op">(</span>stock<span class="op">.</span><span class="fu">getStatus</span><span class="op">().</span><span class="fu">name</span><span class="op">(),</span> <span class="fu">equalTo</span><span class="op">(</span>status<span class="op">));</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<blockquote>
+<p>上面代码源自 <a
+href="http://jbehave.org/reference/stable/developing-stories.html#mapping"
+target="_blank">jbehave</a>，更多类似的项目请移步 <a
+href="https://www.google.com.hk/webhp?sourceid=chrome-instant&amp;ion=1&amp;espv=2&amp;ie=UTF-8#newwindow=1&amp;q=BDD+java"
+target="_blank">Google</a>。</p>
+</blockquote>
+<p>很赞，对不对？</p>
+<p>那是不是意味着下面的测试就不算上是”文档”呢？</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@RunWith</span><span class="op">(</span>SpringJUnit4ClassRunner<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="at">@TestPropertySource</span><span class="op">(</span><span class="st">&quot;classpath:default.properties&quot;</span><span class="op">)</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="at">@ContextConfiguration</span><span class="op">(</span>classes <span class="op">=</span> <span class="op">{</span>SecureDataSourceConfiguration<span class="op">.</span><span class="fu">class</span><span class="op">,</span> PropertySourcesPlaceholderConfigurer<span class="op">.</span><span class="fu">class</span><span class="op">})</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> DefaultDataSourceTest <span class="op">{</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">DataSource</span> secure<span class="op">;</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">should_inject_secure_data_sources</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>        <span class="fu">assertThat</span><span class="op">(</span>secure<span class="op">,</span> <span class="fu">is</span><span class="op">(</span><span class="fu">notNullValue</span><span class="op">()));</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>        <span class="dt">final</span> DruidDataSource dds <span class="op">=</span> <span class="op">(</span>DruidDataSource<span class="op">)</span> <span class="kw">this</span><span class="op">.</span><span class="fu">secure</span><span class="op">;</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>        <span class="fu">assertThat</span><span class="op">(</span>dds<span class="op">.</span><span class="fu">getMaxActive</span><span class="op">(),</span> <span class="fu">is</span><span class="op">(</span><span class="dv">5</span><span class="op">));</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        <span class="fu">assertThat</span><span class="op">(</span>dds<span class="op">.</span><span class="fu">getRemoveAbandonedTimeoutMillis</span><span class="op">(),</span> <span class="fu">is</span><span class="op">(</span><span class="dv">300000L</span><span class="op">));</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>然后并不是这样的，细心的人会发现：</p>
+<ol type="1">
+<li>类名 <code>DefaultDataSourceTest</code>，说明了测试场景；</li>
+<li>方法名
+<code>should_inject_secure_data_sources</code>，说明代码的预期行为。</li>
+</ol>
+<p>测试代码甚至还可以是一份直观的使用教程，如：</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode java"><code class="sourceCode java"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="at">@RunWith</span><span class="op">(</span>SpringJUnit4ClassRunner<span class="op">.</span><span class="fu">class</span><span class="op">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="at">@TestPropertySource</span><span class="op">(</span><span class="st">&quot;classpath:multiple.properties&quot;</span><span class="op">)</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="at">@ContextConfiguration</span><span class="op">(</span>classes <span class="op">=</span> <span class="op">{</span>MultipleDataSourcesTest<span class="op">.</span><span class="fu">Config</span><span class="op">.</span><span class="fu">class</span><span class="op">,</span> SecureDataSourceConfiguration<span class="op">.</span><span class="fu">class</span><span class="op">,</span> PropertySourcesPlaceholderConfigurer<span class="op">.</span><span class="fu">class</span><span class="op">})</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">public</span> <span class="kw">class</span> MultipleDataSourcesTest <span class="op">{</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Autowired</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="bu">Map</span><span class="op">&lt;</span><span class="bu">String</span><span class="op">,</span> <span class="bu">DataSource</span><span class="op">&gt;</span> sources<span class="op">;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Test</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">void</span> <span class="fu">should_inject_two_data_sources</span><span class="op">()</span> <span class="kw">throws</span> <span class="bu">Exception</span> <span class="op">{</span> <span class="kw">...</span> <span class="op">}</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@Configuration</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">public</span> <span class="dt">static</span> <span class="kw">class</span> Config <span class="kw">extends</span> SecureDataSourceConfiguration <span class="op">{</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Bean</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>        <span class="at">@ConfigurationProperties</span><span class="op">(</span><span class="st">&quot;ds.m1&quot;</span><span class="op">)</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        FactoryBean<span class="op">&lt;</span><span class="bu">DataSource</span><span class="op">&gt;</span> <span class="fu">m1</span><span class="op">(</span>JdbcUrlTemplate jdbcUrl<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">createSecureDataSourceFactoryBean</span><span class="op">(</span><span class="st">&quot;wac_m1&quot;</span><span class="op">,</span> jdbcUrl<span class="op">);</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        <span class="at">@Bean</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        <span class="at">@ConfigurationProperties</span><span class="op">(</span><span class="st">&quot;ds.m2&quot;</span><span class="op">)</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>        FactoryBean<span class="op">&lt;</span><span class="bu">DataSource</span><span class="op">&gt;</span> <span class="fu">m2</span><span class="op">(</span>JdbcUrlTemplate jdbcUrl<span class="op">)</span> <span class="op">{</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="fu">createSecureDataSourceFactoryBean</span><span class="op">(</span><span class="st">&quot;wac_m2&quot;</span><span class="op">,</span> jdbcUrl<span class="op">);</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>        <span class="op">}</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="op">}</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<p>看到这里，我想各位应该明白了，写出有”文档”价值的测试代码，首先不难，其次它带来的益处是你以前无法想象：</p>
+<ol type="1">
+<li>有了这样的测试代码，你再也不用把时间浪费在 QQ 的沟通上；</li>
+<li>有了这样的测试代码，Code Review 对你来说都是件轻松愉快的事情；</li>
+<li>有了这样的测试代码，你是不是都有了提 Merge Request 的冲动呢？</li>
+</ol>
+<nav class="not-prose"><ul><li><a href="/post/#/essay"><span class="icons-outlined align-bottom">tag</span>杂文无序</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2026 zhongl.fun</p></footer></main></body></html>

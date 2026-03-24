@@ -1,0 +1,156 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>利用测试用例提速 Code Review</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="一说到 Code Review 没人不说好，可一旦开始做就呵呵哒了。貌似写测试用例也是如此，本文斗胆将二者结合起来，看看是否能够提升 Code Review 的效率，同时还增加一个写好测试用例的理由。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2017-11-29">Nov 29, 2017</time><h1>利用测试用例提速 Code Review</h1></header><div class="lead">
+
+</div>
+<!--more-->
+<p>一说到 Code Review
+没人不说好，可一旦开始做就呵呵哒了。貌似写测试用例也是如此，本文斗胆将二者结合起来，看看是否能够提升
+Code Review 的效率，同时还增加一个写好测试用例的理由。</p>
+<h1 id="code-review-的窘境">Code Review 的窘境</h1>
+<p>最为常见的 Code Review
+方式，就是一帮人订了个会议室，在投影的代码下唇枪舌战数个小时后，代码主要编写者领到一堆”所谓”改进意见，大家就不欢而散了，再然后就多半没有然后了。</p>
+<blockquote>
+<p>上面的描述或许过于极端，如果你的实际场景没有这样糟糕的话，那么恭喜你，不是最惨的！</p>
+</blockquote>
+<p>究其原因，想必实践过的人都能说上一两点，比如：</p>
+<ol type="1">
+<li>没找对合适的 Reviewer</li>
+<li>被 Code Style 这类细节带歪了楼</li>
+<li>各种命名含义不明确，不一致，没法讨论</li>
+<li>代码（改动）太多，弄不清脉络重点</li>
+</ol>
+<p>等等，这里不一一列举了。其实，上面都还不是真正的原因。</p>
+<p>Code Review 本质与测试相同，两个核心点：</p>
+<ol type="1">
+<li><strong>边界明晰的范围</strong>，即评审的目标对象有哪些？</li>
+<li><strong>尽可能统一的评价标准（维度）</strong>，即什么是好，什么是坏？</li>
+</ol>
+<blockquote>
+<p><strong>统一的评价标准（维度）</strong></p>
+<ul>
+<li>银弹式的标准几乎没有，因为编程的世界极少存在唯一解法；</li>
+<li>常见的标准就是大家曾经认可过的设计方案，原则，或是约定等；</li>
+<li>标准至少要在评审的参与者中能够达成一致，当然适用范围越大越好；</li>
+<li>若存在分歧，最好在有限时间内友好协商；</li>
+<li>若还是彼此有所保留，笔者建议由代码质量的第一责任人最终定夺。</li>
+</ul>
+</blockquote>
+<h1 id="测试用例的价值">测试用例的价值</h1>
+<p>试想一下，如果存在<strong>良好可读性</strong>的测试用例，Code Review
+的过程便会轻松愉快，如下：</p>
+<ol type="1">
+<li>对比一下 测试用例
+代码的变化，那么对应的实现代码变化，在每位参与评审人中都有一个基本统一的预期了；</li>
+<li>默认提交评审前，所有测试用例都是运行通过的，接下来就根据测试用例改动点的业务优先级排序，逐个评审；
+<ol type="1">
+<li>先看测试用例的变化是否满足需求的预期，比如场景是否覆盖全面，用例逻辑是否正确？</li>
+<li>再看其实现的相关代码是否有改进空间，比如执行效率高低，简洁易读与否？</li>
+</ol></li>
+<li>过完后，将需要补充纠正的要点列入 TODO
+List，等待代码更新，安排下次评审，直到代码可以合并。</li>
+</ol>
+<h2
+id="良好可读性的测试用例能进一步提升评审效率">良好可读性的测试用例能进一步提升评审效率</h2>
+<p>测试用例的命名好坏，与断言逻辑是否简洁清晰，直接影响评审者的发现问题的速度和准确率。</p>
+<p>为了形象的说明，来看一个比较”极端”的范例：</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="st">&quot;append remote address as query string to via of received request&quot;</span> in <span class="op">{</span> </span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pipeline</span><span class="op">(</span><span class="st">&quot;10.0.0.1:12345&quot;</span> <span class="op">~</span> <span class="st">&quot;10.0.0.2:5902&quot;</span><span class="op">)</span> <span class="op">&gt;&gt;&gt;</span> <span class="op">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="st">      |LWP /xxx</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="st">      |via:tcp://10.0.0.1:12306</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="st">      |</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="st">      |</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span> <span class="op">==&gt;</span> <span class="op">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;&quot;&quot;</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="st">      |LWP /xxx</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="st">      |via:tcp://10.0.0.1:12306?r=10.0.0.1:12345</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="st">      |</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="st">      |</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="st">    &quot;&quot;&quot;</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<blockquote>
+<p>以上是笔者在阿里工作期间，为通讯协议网关服务器编写的真实测试代码片段。此网关服务器类似
+nginx，实现了是对自定义通讯协议的<strong>过滤</strong>和<strong>转换</strong>。更多细节可参见我相关的
+<a
+href="https://speakerdeck.com/zhongl/lego-lets-build-everything-by-scala"
+target="_blank">分享</a></p>
+</blockquote>
+<p>首先测试用例命名简要说明了逻辑行为的期望，即
+<strong>对收到的请求追加远端地址作为 <code>via</code> 的
+<code>query</code>
+参数</strong>。后面测试的断言逻辑也清晰的呈现出，对于一个链接两端的
+<code>pipeline</code>，在收到一个请求处理过后，其结果是在其
+<code>via</code> 头的值上追加了 <code>r=10.0.0.1:12345</code>，即
+<code>pipeline</code> 左边（远端）的地址。</p>
+<blockquote>
+<p>上面代码是利用 Scala 灵活的语法创造用于简化断言逻辑的 DSL。</p>
+</blockquote>
+<p>笔者并非鼓吹此种极端程度的测试用例编写风格，只是为了让大家对<strong>良好可读性</strong>的重要性有更深刻的认识。</p>
+<p>几乎主流的编程语言都有优秀的测试工具库来帮助提升改善测试用例代码的可读性，因此，笔者强烈推荐务必使用。比如，再看一个使用
+<a href="http://www.scalatest.org/" target="_blank">ScalaTest</a>
+正常的范例：</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> UnitGenSpec <span class="kw">extends</span> FlatSpec <span class="kw">with</span> Matchers <span class="op">{</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;duration&quot;</span> should <span class="st">&quot;get right unit&quot;</span> in <span class="op">{</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">time</span><span class="op">(</span><span class="dv">1</span> nanosecond<span class="op">)</span> shouldBe <span class="st">&quot;1ns&quot;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">time</span><span class="op">(</span><span class="dv">1</span> microsecond<span class="op">)</span> shouldBe <span class="st">&quot;1us&quot;</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">time</span><span class="op">(</span><span class="dv">1</span> millisecond<span class="op">)</span> shouldBe <span class="st">&quot;1ms&quot;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">time</span><span class="op">(</span><span class="dv">1</span> second<span class="op">)</span> shouldBe <span class="st">&quot;1s&quot;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">time</span><span class="op">(</span><span class="dv">1</span> minute<span class="op">)</span> shouldBe <span class="st">&quot;1m&quot;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">time</span><span class="op">(</span><span class="dv">1</span> hour<span class="op">)</span> shouldBe <span class="st">&quot;1h&quot;</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">time</span><span class="op">(</span><span class="dv">1</span> day<span class="op">)</span> shouldBe <span class="st">&quot;1d&quot;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;bytes&quot;</span> should <span class="st">&quot;get right unit&quot;</span> in <span class="op">{</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">bytes</span><span class="op">(</span><span class="dv">1023L</span><span class="op">)</span> shouldBe <span class="st">&quot;1023B&quot;</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">bytes</span><span class="op">(</span><span class="dv">1025L</span><span class="op">)</span> shouldBe <span class="st">&quot;1025B&quot;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">bytes</span><span class="op">(</span><span class="dv">1024L</span><span class="op">)</span> shouldBe <span class="st">&quot;1K&quot;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">bytes</span><span class="op">(</span><span class="dv">1024L</span> <span class="op">*</span> <span class="dv">1024</span><span class="op">)</span> shouldBe <span class="st">&quot;1M&quot;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    Macro<span class="op">.</span><span class="fu">bytes</span><span class="op">(</span><span class="dv">1024L</span> <span class="op">*</span> <span class="dv">1024</span> <span class="op">*</span> <span class="dv">1024</span><span class="op">)</span> shouldBe <span class="st">&quot;1G&quot;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="op">}</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a><span class="op">}</span></span></code></pre></div>
+<blockquote>
+<p>源代码出自 <a
+href="https://github.com/hanabix/config-annotation/blob/master/src/test/scala/com/wacai/config/annotation/UnitGenSpec.scala"
+target="_blank">https://github.com/hanabix/config-annotation</a></p>
+</blockquote>
+<h1 id="辅以流程工具事半功倍">辅以流程工具事半功倍</h1>
+<p>前面的阐述，相信你已经明白怎么做了。最后，我就好人做到底，分享我的最佳工具实践。</p>
+<h2 id="code-review-on-github">Code Review on Github</h2>
+<ol type="1">
+<li>代码库配置一个持续集成服务，比如 <a
+href="https://docs.travis-ci.com/" target="_blank">travis-ci</a>；</li>
+<li>所需评审的代码变更都必须以 <a
+href="https://help.github.com/articles/about-pull-requests/"
+target="_blank">Pull Request</a> 方式提交，提交后 <a
+href="https://docs.travis-ci.com/" target="_blank">travis-ci</a>
+会自动帮你对变更的代码版本运行测试用例，是否通过的结果会显示在 Pull
+Requst 中；</li>
+</ol>
+<figure>
+<img src="pull-request.png" alt="image pull request" />
+<figcaption aria-hidden="true">image pull request</figcaption>
+</figure>
+<blockquote>
+<p>Pull Request 就是一个特殊的
+Issue，需要说明变更的意图，且自动包含了变更的所有 <code>commits</code>
+以及 方便的文件 diff 视图，这里提供一个真实的 Pull Request 供参考 <a
+href="https://github.com/hanabix/config-annotation/pull/6" class="uri"
+target="_blank">https://github.com/hanabix/config-annotation/pull/6</a></p>
+</blockquote>
+<ol type="1">
+<li>余下的操作细节，还请自行参考 <a
+href="https://help.github.com/articles/about-pull-requests/"
+target="_blank">Pull Request 文档</a> 。</li>
+</ol>
+<h2 id="不能用-github-怎么办">不能用 Github 怎么办？</h2>
+<p>用 <a href="https://about.gitlab.com/" target="_blank">Gitlab</a>
+代替。</p>
+<p>End.</p>
+<nav class="not-prose"><ul><li><a href="/post/#/essay"><span class="icons-outlined align-bottom">tag</span>杂文无序</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2026 zhongl.fun</p></footer></main></body></html>

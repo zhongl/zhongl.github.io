@@ -1,0 +1,286 @@
+<!DOCTYPE html><html lang="zh-CN"><head><title>重来TDD：矩阵</title><meta charset="utf-8" /><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="description" content="矩阵变换的示例也借鉴自 「Type-Driven Development with Idris」 一书。" /><meta name="viewport" content="width=device-width" /><link rel="stylesheet" type="text/css" href="/style.css" /><link rel="apple-touch-icon" size="180x180" href="/apple-touch-icon.png" /><link rel="icon" type="image/png" size="32x32" href="/favicon-32x32.png" /><link rel="icon" type="image/png" size="16x16" href="/favicon-16x16.png" /><link rel="manifest" href="/site.webmanifest" /><script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-REFRQT9XHR"></script><script>window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-REFRQT9XHR');
+</script></head><body><main><menu><div><a href="/post/">𝚲</a></div></menu><article><header><time datetime="2024-10-24">Oct 24, 2024</time><h1>重来TDD：矩阵</h1></header><figure>
+<img src="0-a6f1f60f848ab6784ea7449dbfa507ccf9d457fb.png"
+alt="Transpose the Mind" />
+<figcaption aria-hidden="true">Transpose the Mind</figcaption>
+</figure>
+<div class="lead">
+<p>比起上一篇锦上添花的 <code>Printf</code>，<strong>矩阵变换</strong>
+堪称 TDD 奥义的体现<a href="#fn1" class="footnote-ref" id="fnref1"
+role="doc-noteref"><sup>1</sup></a>。</p>
+</div>
+<p>人工智能作为现象级的热点，忽然间网上懂神经网络的人，比懂写程序的人还多。好处是，让本文的阅读门槛低了不少。</p>
+<h2 id="向量的类型表示">向量的类型表示</h2>
+<p>聊矩阵的前提，是要确立向量的类型表示。有点编程经验的人，脑海里可能立马想到了用
+<strong>Array（数组）</strong> 类型来表示 <a href="#fn2"
+class="footnote-ref" id="fnref2"
+role="doc-noteref"><sup>2</sup></a>。比如一个三维向量，用数组会是这样的：</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">val</span> vect3d <span class="op">=</span> <span class="ex">Array</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> vect3d<span class="op">:</span> <span class="ex">Array</span><span class="op">[</span><span class="bu">Int</span><span class="op">]</span> <span class="op">=</span> <span class="ex">Array</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span></code></pre></div>
+<p>很遗憾，上面的表示缺失了向量 <strong>维度的数量</strong>
+，这个至关重要。要把维度的信息添加上，向量的类型表示则会是
+<code>Vect[N &lt;: Int, A]</code>， 且 <code>N</code> 必须是整数。若以
+ADT 的形式来呈现 <a href="#fn3" class="footnote-ref" id="fnref3"
+role="doc-noteref"><sup>3</sup></a>，则是：</p>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="kw">import</span> scala<span class="op">.</span>compiletime<span class="op">.</span>ops<span class="op">.</span><span class="dt">int</span><span class="op">.</span>S</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>enum Vect<span class="op">[</span>N <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> <span class="op">+</span>A<span class="op">]:</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> `<span class="op">[]</span>` <span class="kw">extends</span> Vect<span class="op">[</span><span class="dv">0</span><span class="op">,</span> Nothing<span class="op">]</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">::[</span>N <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> <span class="op">+</span>A<span class="op">](</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    x<span class="op">:</span> A<span class="op">,</span> xs<span class="op">:</span> Vect<span class="op">[</span>N<span class="op">,</span> A<span class="op">]</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">)</span> <span class="kw">extends</span> Vect<span class="op">[</span>S<span class="op">[</span>N<span class="op">],</span> A<span class="op">]</span></span></code></pre></div>
+<p>和 <code>List[A]</code> 非常像，一个向量只会是以下两种可能：</p>
+<ol type="1">
+<li><code>[]</code> ，类似 <code>Nil</code>， 表示零维度的向量，对它来说
+<code>A</code> 就是 <code>Nothing</code> <a href="#fn4"
+class="footnote-ref" id="fnref4"
+role="doc-noteref"><sup>4</sup></a>。</li>
+<li><code>::</code> ，类似 <code>Cons</code> <a href="#fn5"
+class="footnote-ref" id="fnref5"
+role="doc-noteref"><sup>5</sup></a>，表示一个标量与另一个向量组成的复合向量。</li>
+</ol>
+<p>如果说，<code>xs</code> 的维度数量是
+<code>N</code>，那么复合得到的向量的维度数量是
+<code>S[N]</code>，它等同于 <code>N+1</code> <a href="#fn6"
+class="footnote-ref" id="fnref6"
+role="doc-noteref"><sup>6</sup></a>。此时再看 <code>vect3d</code>：</p>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="kw">val</span> vect3d <span class="op">=</span> <span class="dv">1</span> <span class="op">::</span> <span class="dv">2</span> <span class="op">::</span> <span class="dv">3</span> <span class="op">::</span> `<span class="op">[]</span>`</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> vect3d<span class="op">:</span> <span class="dv">2</span> <span class="op">::</span> <span class="bu">Int</span> <span class="op">=</span> <span class="op">::(</span><span class="dv">1</span><span class="op">,::(</span><span class="dv">2</span><span class="op">,::(</span><span class="dv">3</span><span class="op">,[])))</span></span></code></pre></div>
+<p>注意，若是觉得 <code>2 :: Int</code> 看着不对劲的，请自行默念三遍
+<code>S[N] = N+1</code>。这里的 <code>2 :: Int</code> 等价于
+<code>Vect[3, Int]</code>。</p>
+<p>为了友好地展示向量，我额外实现了一个 <code>show</code>
+函数，效果如下：</p>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">show</span><span class="op">(</span>vect3d<span class="op">)</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res0<span class="op">:</span> <span class="ex">String</span> <span class="op">=</span> <span class="op">[</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">]</span></span></code></pre></div>
+<h2 id="矩阵与变换函数">矩阵与变换函数</h2>
+<p>矩阵可以理解为，每个维度都是向量的向量。那么，它的类型可以表示为：</p>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="kw">type</span> Mat<span class="op">[</span>R <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> C <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> A<span class="op">]</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">=</span> Vect<span class="op">[</span>R<span class="op">,</span> Vect<span class="op">[</span>C<span class="op">,</span> A<span class="op">]]</span></span></code></pre></div>
+<p>进而，对矩阵进行变换的函数类型表示应该是：</p>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> trans<span class="op">[</span>R <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> C <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> A<span class="op">]:</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  Mat<span class="op">[</span>R<span class="op">,</span> C<span class="op">,</span> A<span class="op">]</span> <span class="op">=&gt;</span> Mat<span class="op">[</span>C<span class="op">,</span> R<span class="op">,</span> A<span class="op">]</span> <span class="op">=</span> <span class="op">???</span></span></code></pre></div>
+<p>这样，在类型上严谨地表示出变换操作的含义，即 <code>R</code> 和
+<code>C</code>
+代表的行列对调。既然如此，有没有感觉实现起来就是临门一脚的事了？</p>
+<p>嘿嘿嘿。脑子里是不是在想，来个两层 <code>for</code>
+循环嵌套先，数组下标一顿操作？诶，数组下标？这里没有数组，更没有下标，怎么办？</p>
+<blockquote>
+<p>You have to let it all go, Neo. Fear, doubt, and disbelief. Free your
+mind.</p>
+</blockquote>
+<p><cite>Morpheus, <strong><em>The Matrix (1999)</em></strong> <a
+href="#fn7" class="footnote-ref" id="fnref7"
+role="doc-noteref"><sup>7</sup></a></cite></p>
+<p>这种指令式编程的思维习惯，我们暂时收住先。不妨来看看，一个典型的函数式编程思维是如何解决这类问题的？</p>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> toList<span class="op">[</span>A<span class="op">]:</span> Vect<span class="op">[?,</span> A<span class="op">]</span> <span class="op">=&gt;</span> <span class="ex">List</span><span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> <span class="op">???</span></span></code></pre></div>
+<p>要不试着实现这个 <code>toList</code>
+函数，全当是个热身吧。对于一个向量，无论有多少个维度，它只会有两种情况：</p>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> toList<span class="op">[</span>A<span class="op">]:</span> Vect<span class="op">[?,</span> A<span class="op">]</span> <span class="op">=&gt;</span> <span class="ex">List</span><span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> `<span class="op">[]</span>`    <span class="op">=&gt;</span> <span class="op">???</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> x <span class="op">::</span> xs <span class="op">=&gt;</span> <span class="op">???</span>  </span></code></pre></div>
+<p>当是 <code>[]</code> 的情况，答案是显而易见的，</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> toList<span class="op">[</span>A<span class="op">]:</span> Vect<span class="op">[?,</span> A<span class="op">]</span> <span class="op">=&gt;</span> <span class="ex">List</span><span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> `<span class="op">[]</span>`    <span class="op">=&gt;</span> Nil</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> x <span class="op">::</span> xs <span class="op">=&gt;</span> <span class="op">???</span>  </span></code></pre></div>
+<p>另一种嘛，呃……如果正向思考不明显，可以尝试一下逆向思考。上文提到，向量和列表都是只有两种情况。列表的另一种情况，也是
+<strong>一个元素</strong> 和 <strong>另一个列表</strong>
+的复合列表。这里的那 <strong>一个元素</strong> 已经有了，就是
+<code>x</code>；而 <strong>另一个列表</strong> 是不是可以继续由
+<strong>另一个向量</strong>
+得到呢？这不巧了嘛，我们手上正好有个函数能做到啊！</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> toList<span class="op">[</span>A<span class="op">]:</span> Vect<span class="op">[?,</span> A<span class="op">]</span> <span class="op">=&gt;</span> <span class="ex">List</span><span class="op">[</span>A<span class="op">]</span> <span class="op">=</span> </span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> `<span class="op">[]</span>`    <span class="op">=&gt;</span> Nil</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> x <span class="op">::</span> xs <span class="op">=&gt;</span> x <span class="op">::</span> <span class="fu">toList</span><span class="op">(</span>xs<span class="op">)</span>  </span></code></pre></div>
+<p>拿结果类型这么反向推导一下，就把 <code>???</code>
+的坑给添上了。试试吧，看编译器认不认。</p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">toList</span><span class="op">(</span>vect3d<span class="op">)</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res1<span class="op">:</span> <span class="ex">List</span><span class="op">[</span><span class="bu">Int</span><span class="op">]</span> <span class="op">=</span> <span class="ex">List</span><span class="op">(</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">,</span> <span class="dv">3</span><span class="op">)</span></span></code></pre></div>
+<p>现在，我们回来看 <code>trans</code>
+函数。熟悉的配方，矩阵作为一个向量，就是只会有:</p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> trans<span class="op">[</span>R <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> C <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> A<span class="op">]:</span> Mat<span class="op">[</span>R<span class="op">,</span> C<span class="op">,</span> A<span class="op">]</span> <span class="op">=&gt;</span> Mat<span class="op">[</span>C<span class="op">,</span> R<span class="op">,</span> A<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> `<span class="op">[]</span>`    <span class="op">=&gt;</span> <span class="op">???</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> x <span class="op">::</span> xs <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p>第一种情况为 <code>[]</code>，这意味着 <code>R</code> 是
+<code>0</code>，此时的 <code>trans</code> 表示为
+<code>Mat[0, C, A] =&gt; Mat[C, 0, A]</code>。而如何得到
+<code>Mat[C, 0, A]</code> 呢？
+套一下矩阵的定义，<code>Mat[C, 0, A]</code> 就是一个 <code>C</code>
+个维度是 <code>Vect[0, A]</code> 的向量。而 <code>Vect[0, A]</code> 就是
+<code>[]</code> 嘛，把它填充到 <code>C</code> 个维度里，不就是
+<code>Mat[C, 0, A]</code> 了嘛。好，假定存在这个 <code>fill</code>
+函数：</p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> trans<span class="op">[</span>R <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> C <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> A<span class="op">]:</span> Mat<span class="op">[</span>R<span class="op">,</span> C<span class="op">,</span> A<span class="op">]</span> <span class="op">=&gt;</span> Mat<span class="op">[</span>C<span class="op">,</span> R<span class="op">,</span> A<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> `<span class="op">[]</span>`    <span class="op">=&gt;</span> fill<span class="op">[</span>C<span class="op">](</span>`<span class="op">[]</span>`<span class="op">)</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> x <span class="op">::</span> xs <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p>第二种情况稍显复杂，但 <code>toList</code> 的经验告诉我们，用
+<code>trans</code> 肯定能从 <code>xs</code>
+得到另一个变换好的向量，至于它怎么与 <code>x</code>
+合起来，我们暂且假定有个 <code>zip</code> 函数能够帮我们做到。</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> trans<span class="op">[</span>R <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> C <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> A<span class="op">]:</span> Mat<span class="op">[</span>R<span class="op">,</span> C<span class="op">,</span> A<span class="op">]</span> <span class="op">=&gt;</span> Mat<span class="op">[</span>C<span class="op">,</span> R<span class="op">,</span> A<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> `<span class="op">[]</span>`    <span class="op">=&gt;</span> fill<span class="op">[</span>C<span class="op">](</span>`<span class="op">[]</span>`<span class="op">)</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> x <span class="op">::</span> xs <span class="op">=&gt;</span> <span class="fu">zip</span><span class="op">(</span>x<span class="op">,</span> <span class="fu">trans</span><span class="op">(</span>xs<span class="op">))</span></span></code></pre></div>
+<p>至于 <code>zip</code> 函数的类型表示，我们来看类型上下文：</p>
+<ul>
+<li><code>x: Vect[C, A]</code></li>
+<li><code>trans(xs): Mat[C, R-1, A]</code></li>
+<li><code>=&gt; Mat[C, R, A]</code></li>
+</ul>
+<p><code>R-1</code> 不好表示，那就两边都加一， 变成 <code>R</code> 与
+<code>S[R]</code>。 看不懂 <code>S[R]</code>
+，那就是刚才默念不到位。</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zip<span class="op">[</span>R <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> C <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> A<span class="op">]:</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="op">(</span>Vect<span class="op">[</span>C<span class="op">,</span> A<span class="op">],</span> Mat<span class="op">[</span>C<span class="op">,</span> R<span class="op">,</span> A<span class="op">])</span> <span class="op">=&gt;</span> </span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    Mat<span class="op">[</span>C<span class="op">,</span> S<span class="op">[</span>R<span class="op">],</span> A<span class="op">]</span> <span class="op">=</span> <span class="op">???</span></span></code></pre></div>
+<p>一顿推导下来，<code>trans</code> 函数被拆分为 <code>fill</code> 和
+<code>zip</code> 两个函数，留给我们逐个击破。<code>fill</code>
+看着简单了，其实不然，受篇幅限制这里不展开了，感兴趣请告诉我，我另开一篇细说。跳到
+<code>zip</code> ，还是老套路，向量只有两种情况：</p>
+<div class="sourceCode" id="cb16"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zip<span class="op">[</span>R <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> C <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> A<span class="op">]:</span> <span class="op">(</span>Vect<span class="op">[</span>C<span class="op">,</span> A<span class="op">],</span> Mat<span class="op">[</span>C<span class="op">,</span> R<span class="op">,</span> A<span class="op">])</span> <span class="op">=&gt;</span> Mat<span class="op">[</span>C<span class="op">,</span> S<span class="op">[</span>R<span class="op">],</span> A<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span>`<span class="op">[]</span>`<span class="op">,</span> `<span class="op">[]</span>`<span class="op">)</span>       <span class="op">=&gt;</span> <span class="op">???</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span>x <span class="op">::</span> xs<span class="op">,</span> y <span class="op">::</span> ys<span class="op">)</span> <span class="op">=&gt;</span> <span class="op">???</span></span></code></pre></div>
+<p>诶，不应该是四种情况吗？注意，参数中向量和矩阵都是 <code>C</code>
+个维度，只会有两种情况，没错。第一种情况，答案不能再明显了，跳过。第二种情况，有点懵。没事，再看其类型上下文
+<a href="#fn8" class="footnote-ref" id="fnref8"
+role="doc-noteref"><sup>8</sup></a>：</p>
+<ul>
+<li><code>x : A</code></li>
+<li><code>xs: Vect[C-1, A]</code></li>
+<li><code>y : Vect[R, A]</code></li>
+<li><code>ys: Mat[C-1, R, A]</code></li>
+</ul>
+<p>按惯例，<strong>另一个</strong> 的部分递归解决，即
+<code>zip(xs, ys): Mat[C-1, S[R], A]</code>。这与最终的结果
+<code>Mat[C, S[R], A]</code> 就差一个
+<code>Vect[S[R], A]</code>。这不又巧了，就是
+<code>(x :: y): Vect[S[R], A]</code>啊。</p>
+<div class="sourceCode" id="cb17"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zip<span class="op">[</span>R <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> C <span class="op">&lt;:</span> <span class="bu">Int</span><span class="op">,</span> A<span class="op">]:</span> <span class="op">(</span>Vect<span class="op">[</span>C<span class="op">,</span> A<span class="op">],</span> Mat<span class="op">[</span>C<span class="op">,</span> R<span class="op">,</span> A<span class="op">])</span> <span class="op">=&gt;</span> Mat<span class="op">[</span>C<span class="op">,</span> S<span class="op">[</span>R<span class="op">],</span> A<span class="op">]</span> <span class="op">=</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span>`<span class="op">[]</span>`<span class="op">,</span> `<span class="op">[]</span>`<span class="op">)</span>       <span class="op">=&gt;</span> `<span class="op">[]</span>`</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">case</span> <span class="op">(</span>x <span class="op">::</span> xs<span class="op">,</span> y <span class="op">::</span> yx<span class="op">)</span> <span class="op">=&gt;</span> </span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    <span class="op">(</span>x <span class="op">::</span> y<span class="op">)</span> <span class="op">::</span> <span class="fu">zip</span><span class="op">(</span>xs<span class="op">,</span> ys<span class="op">)</span></span></code></pre></div>
+<p>脑子没跟上的话，就结合下图进行颅内推演一下吧。</p>
+<figure>
+<img src="ecadd9a60fb7e003e2f8445226dd57ad95e02e5b.png"
+alt="运算推演" />
+<figcaption aria-hidden="true">运算推演</figcaption>
+</figure>
+<p>完整的代码照例查看脚注 <a href="#fn9" class="footnote-ref"
+id="fnref9" role="doc-noteref"><sup>9</sup></a>，
+最终的实现效果应该如下，</p>
+<div class="sourceCode" id="cb18"><pre
+class="sourceCode scala"><code class="sourceCode scala"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">show</span><span class="op">(</span>mat<span class="op">)</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res0<span class="op">:</span> <span class="ex">String</span> <span class="op">=</span> <span class="op">[</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="op">[</span><span class="dv">1</span><span class="op">,</span> <span class="dv">2</span><span class="op">]</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="op">[</span><span class="dv">3</span><span class="op">,</span> <span class="dv">4</span><span class="op">]</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="op">[</span><span class="dv">5</span><span class="op">,</span> <span class="dv">6</span><span class="op">]</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="op">]</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>scala<span class="op">&gt;</span> <span class="fu">show</span><span class="op">(</span><span class="fu">trans</span><span class="op">(</span>mat<span class="op">))</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="kw">val</span> res1<span class="op">:</span> <span class="ex">String</span> <span class="op">=</span> <span class="op">[</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>  <span class="op">[</span><span class="dv">1</span><span class="op">,</span> <span class="dv">3</span><span class="op">,</span> <span class="dv">5</span><span class="op">]</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>  <span class="op">[</span><span class="dv">2</span><span class="op">,</span> <span class="dv">4</span><span class="op">,</span> <span class="dv">6</span><span class="op">]</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="op">]</span></span></code></pre></div>
+<p>或许你会想，“这就是个学术示例，工业界不会真有人这么玩类型吧”。工业界是否有人这么做，我确实不知道，但我发现
+Mojo 作为一门新晋 AI
+编程语言，致力于模型训练推理的编译优化，其官方文档也有类似的示例，引用至此供大家自行判断
+<a href="#fn10" class="footnote-ref" id="fnref10"
+role="doc-noteref"><sup>10</sup></a>：</p>
+<div class="sourceCode" id="cb19"><pre
+class="sourceCode py"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>fn concat[ty: DType, len1: Int, len2: Int](</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  lhs: SIMD[ty, len1], rhs: SIMD[ty, len2]</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>) <span class="op">-&gt;</span> SIMD[ty, len1<span class="op">+</span>len2]:</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  var result <span class="op">=</span> SIMD[ty, len1 <span class="op">+</span> len2]()</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(len1):</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    result[i] <span class="op">=</span> SIMD[ty, <span class="dv">1</span>](lhs[i])</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(len2):</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    result[len1 <span class="op">+</span> j] <span class="op">=</span> SIMD[ty, <span class="dv">1</span>](rhs[j])</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">return</span> result</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>var a <span class="op">=</span> SIMD[DType.float32, <span class="dv">2</span>](<span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>var x <span class="op">=</span> concat(a, a)</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="bu">print</span>(</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;result type:&#39;</span>, x.element_type, </span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">&#39;length:&#39;</span>, <span class="bu">len</span>(x)</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div>
+<h2 id="何为tdd又为何">何为TDD，又为何？</h2>
+<p>什么是类型驱动开发？我尝试说下个人浅见：</p>
+<ol type="1">
+<li>基于业务场景，建立数据及其函数的类型表示；</li>
+<li>在类型表示基础上，双向推导，挖坑假设；</li>
+<li>迭代往复上述两个步骤，直到所有坑都被填满。</li>
+</ol>
+<p>最后，引用一段电影念白来与君共勉。</p>
+<blockquote>
+<p>I’m trying to free your mind, Neo. But I can only show you the door.
+You’re the one that has to walk through it.</p>
+</blockquote>
+<p><cite>Morpheus, <strong><em>The Matrix (1999)</em></strong> <a
+href="#fn11" class="footnote-ref" id="fnref11"
+role="doc-noteref"><sup>11</sup></a></cite></p>
+<p>照旧，若觉得不错，还请不吝分享，这是对我最大的鼓励。</p>
+<section id="footnotes" class="footnotes footnotes-end-of-document"
+role="doc-endnotes">
+<hr />
+<ol>
+<li id="fn1"><p>矩阵变换的示例也借鉴自 「Type-Driven Development with
+Idris」 一书。<a href="#fnref1" class="footnote-back"
+role="doc-backlink">↩︎</a></p></li>
+<li id="fn2"><p>想到用 Tuple 表示的，给你点个赞。<a href="#fnref2"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn3"><p><a
+href="https://en.wikipedia.org/wiki/Algebraic_data_type" class="uri"
+target="_blank">https://en.wikipedia.org/wiki/Algebraic_data_type</a><a
+href="#fnref3" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn4"><p>既然它什么东西都不是，那么它就可以是任何东西。😇<a
+href="#fnref4" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn5"><p><code>Cons</code> 是 Construct 的缩写。<a href="#fnref5"
+class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn6"><p><code>S</code> 是 Succ 的缩写，其含义什么的后续。<a
+href="#fnref6" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn7"><p><a
+href="https://www.imdb.com/title/tt0133093/quotes/?item=qt0324296&amp;ref_=ext_shr_lnk"
+class="uri"
+target="_blank">https://www.imdb.com/title/tt0133093/quotes/?item=qt0324296&amp;ref_=ext_shr_lnk</a><a
+href="#fnref7" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn8"><p>不得不承认 Idris 查看类型上下文上是非常直观方便的。<a
+href="#fnref8" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn9"><p><a
+href="https://github.com/zhongl/type-driven-development-with-scala3/blob/main/ch03/matrix.worksheet.sc"
+class="uri"
+target="_blank">https://github.com/zhongl/type-driven-development-with-scala3/blob/main/ch03/matrix.worksheet.sc</a><a
+href="#fnref9" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn10"><p><a
+href="https://docs.modular.com/mojo/manual/parameters/#parameter-expressions-are-just-mojo-code"
+class="uri"
+target="_blank">https://docs.modular.com/mojo/manual/parameters/#parameter-expressions-are-just-mojo-code</a><a
+href="#fnref10" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+<li id="fn11"><p><a
+href="https://www.imdb.com/title/tt0133093/quotes/?item=qt0324256&amp;ref_=ext_shr_lnk"
+class="uri"
+target="_blank">https://www.imdb.com/title/tt0133093/quotes/?item=qt0324256&amp;ref_=ext_shr_lnk</a><a
+href="#fnref11" class="footnote-back" role="doc-backlink">↩︎</a></p></li>
+</ol>
+</section>
+<nav class="not-prose"><ul><li><a href="/post/#/plog"><span class="icons-outlined align-bottom">tag</span>码志</a></li></ul></nav><img class="mx-auto size-80 grayscale" src="/qrcode_wechat.jpg" /></article><footer><p><span>©</span>2026 zhongl.fun</p></footer></main></body></html>
